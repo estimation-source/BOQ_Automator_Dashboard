@@ -18,9 +18,18 @@ import streamlit as st
 
 st.markdown("""
     <style>
-    /* वरचा पूर्ण Header Toolbar hidden करण्यासाठी */
+    /* वरचा Header Toolbar लपवण्यासाठी */
     [data-testid="stHeader"] {
-        display: none;
+        display: none !important;
+    }
+    
+    /* खालचा Streamlit Cloud/App Status Badge लपवण्यासाठी */
+    [data-testid="stStatusWidget"],
+    .stAppViewerContainer > iframe,
+    #MainMenu, 
+    footer {
+        display: none !important;
+        visibility: hidden !important;
     }
     </style>
 """, unsafe_allow_html=True)
