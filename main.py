@@ -15,6 +15,16 @@ from openpyxl.utils import get_column_letter
 from PIL import Image
 import streamlit as st
 
+
+st.markdown("""
+    <style>
+    /* वरचा पूर्ण Header Toolbar hidden करण्यासाठी */
+    [data-testid="stHeader"] {
+        display: none;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
 # ============================================================
 # Streamlit Page Config
 # ============================================================
