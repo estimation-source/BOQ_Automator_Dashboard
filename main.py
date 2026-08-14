@@ -56,6 +56,21 @@ st.markdown(
     <style>
     @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
+    /* Hide Streamlit Header, Footer & Cloud Badges completely */
+    [data-testid="stHeader"] {
+        display: none !important;
+    }
+    footer {
+        display: none !important;
+        visibility: hidden !important;
+    }
+    [data-testid="stStatusWidget"] {
+        display: none !important;
+    }
+    #MainMenu {
+        visibility: hidden !important;
+    }
+
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
         background-color: #f4f6f9;
@@ -66,151 +81,6 @@ st.markdown(
         padding-top: 1.5rem;
         padding-bottom: 2rem;
         max-width: 98%;
-    }
-
-    /* Left Sidebar Styling */
-    [data-testid="stSidebar"] {
-        background-color: #f1f5f9;
-        border-right: 1px solid #e2e8f0;
-    }
-    
-    .quick-guide-title {
-        font-size: 15px;
-        font-weight: 700;
-        color: #0f172a;
-        margin-top: 15px;
-        margin-bottom: 12px;
-    }
-    
-    .quick-guide-step {
-        font-size: 13px;
-        color: #475569;
-        margin-bottom: 10px;
-        line-height: 1.4;
-    }
-
-    /* Top Banner Card */
-    .hero-container {
-        background: #ffffff;
-        border-radius: 16px;
-        padding: 24px 30px;
-        border: 1px solid #e2e8f0;
-        box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        margin-bottom: 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
-    }
-
-    .hero-title-text {
-        font-size: 22px;
-        font-weight: 800;
-        color: #0f172a;
-        margin: 0;
-    }
-
-    .hero-sub-text {
-        font-size: 13px;
-        color: #64748b;
-        margin-top: 4px;
-    }
-
-    .engine-active-tag {
-        background-color: #2563eb;
-        color: white;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 6px 14px;
-        border-radius: 20px;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-    }
-
-    /* Step Titles */
-    .step-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    /* Metric/KPI Summary Cards */
-    .kpi-card-box {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 16px 20px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    }
-
-    .kpi-title-lbl {
-        font-size: 11px;
-        font-weight: 700;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .kpi-val-lbl {
-        font-size: 24px;
-        font-weight: 800;
-        color: #0f172a;
-        margin-top: 6px;
-    }
-
-    /* Blue Action Buttons */
-    div.stButton > button[kind="primary"] {
-        background-color: #2563eb !important;
-        color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
-        border-radius: 6px !important;
-        border: none !important;
-        padding: 8px 20px !important;
-    }
-
-    /* Red Reset Button */
-    div.stButton > button[kind="secondary"] {
-        background-color: #dc2626 !important;
-        color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
-        border-radius: 6px !important;
-        border: none !important;
-        padding: 8px 20px !important;
-    }
-
-    /* Green Download Button */
-    div.stDownloadButton > button {
-        background-color: #059669 !important;
-        color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
-        border-radius: 6px !important;
-        border: none !important;
-        padding: 10px 22px !important;
-    }
-
-    /* Tab Custom Styling */
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 16px;
-        border-bottom: 1px solid #e2e8f0;
-    }
-
-    .stTabs [data-baseweb="tab"] {
-        height: 40px;
-        white-space: pre;
-        font-size: 13px;
-        font-weight: 600;
-        color: #64748b;
-    }
-
-    .stTabs [aria-selected="true"] {
-        color: #2563eb !important;
-        border-bottom: 2px solid #2563eb !important;
     }
     </style>
     """,
