@@ -1031,11 +1031,36 @@ if "merged_df" in st.session_state:
 
             st.dataframe(oc_summary, use_container_width=True, hide_index=True)
 
-        with tab3:
-            glass_summary = df_merged.groupby("GlassType").agg({"Qty": "sum"}).reset_index()
-            if "Sr. No." not in glass_summary.columns:
-                glass_summary.insert(0, "Sr. No.", range(1, len(glass_summary) + 1))
-            st.dataframe(glass_summary, use_container_width=True, hide_index=True)
+       with tab3:
+            # Glass Type Breakdown (Auto-Correct Spelling & Combined Sum)
+            df_glass_copy = df_merged.copy()
+
+            # १. स्पेलिंग ऑटो-करेक्ट आणि टेक्स्ट क्लीनिंग फाईल लेव्हलवर करणे
+            def clean_glass_name(text):
+                text = str(text).upper().strip()
+                text = re.sub(r"\s+", " ", text)
+                # 'TOUGHNED' ऐवजी 'TOUGHENED' दुरुस्त करणे
+                text = text.replace("TOUGHNED", "TOUGHENED")
+                return text
+
+            df_glass_copy["CleanGlassType"] = df_glass_copy["GlassType"].apply(clean_glass_name)
+
+            # २. 'NOT SPECIFIED' फिल्टर करून स्वच्छ नावानुसार बेरीज (Sum) करणे
+            df_glass_filtered = df_glass_copy[df_glass_copy["CleanGlassType"] != "NOT SPECIFIED"]
+
+            glass_breakdown = (
+                df_glass_filtered.groupby("CleanGlassType", as_index=False)["Qty"]
+                .sum()
+                .sort_values(by="Qty", ascending=False)
+            )
+
+            # ३. कॉलमचे नाव मूळ नावासारखेच ठेवणे
+            glass_breakdown.columns = ["GlassType", "Qty"]
+
+            # ४. Sr. No. १ पासून जोडणे
+            glass_breakdown.insert(0, "Sr. No.", range(1, len(glass_breakdown) + 1))
+
+            st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
 
         # Download Section Box
         st.markdown("<br>", unsafe_allow_html=True)
