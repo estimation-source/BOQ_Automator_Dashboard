@@ -983,9 +983,20 @@ if "merged_df" in st.session_state:
             df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
 
             # प्रत्येक OC मधील Glass Details एकत्र (Combine) करण्याचे लॉजिक
-            def build_glass_details(group):
-                summary = group.groupby("GlassType")["Qty"].sum()
-                details = [f"{g_type} - {qty}" for g_type, qty in summary.items() if g_type != "NOT SPECIFIED"]
+            # Glass Type मधील Extra Spaces काढून Total एकत्र करण्याचे लॉजिक
+            def build_glass_details(group_indices):
+                sub_df = df_merged_copy.loc[group_indices].copy()
+                
+                # Extra spaces काढणे आणि नाव क्लीन करणे
+                sub_df["CleanGlassType"] = (
+                    sub_df["GlassType"]
+                    .astype(str)
+                    .str.strip()
+                    .str.replace(r"\s+", " ", regex=True)
+                )
+                
+                summary = sub_df.groupby("CleanGlassType")["Qty"].sum()
+                details = [f"{g_type} - {qty}" for g_type, qty in summary.items() if g_type.upper() != "NOT SPECIFIED"]
                 return ", ".join(details) if details else "-"
 
             # Groupby करून Total Qty, Total SQFT आणि Glass Details एकत्र काढणे
