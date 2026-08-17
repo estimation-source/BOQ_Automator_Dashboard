@@ -21,14 +21,27 @@ from st_supabase_connection import SupabaseConnection
 st_supabase = st.connection("supabase", type=SupabaseConnection)
 
 
-# Function to insert BOQ records into Supabase Database
-def save_boq_to_db(client_name, total_sqft, total_cost):
+# Function to insert BOQ records without Cost
+def save_boq_to_db(client_name, total_sqft):
     try:
-        data = {"client": client_name, "sqft": total_sqft, "cost": total_cost}
+        data = {"client": client_name, "sqft": total_sqft}
         st_supabase.table("boq_records").insert(data).execute()
-        st.success("Data successfully saved to Supabase cloud!")
+        st.success("🎉 Data successfully saved to Supabase cloud!")
     except Exception as e:
         st.error(f"Error saving data: {e}")
+
+
+# UI Testing
+st.title("BOQ Data Entry Test")
+
+client_input = st.text_input("Client / Project Name")
+sqft_input = st.number_input("Total SqFt", min_value=0.0)
+
+if st.button("Save Record"):
+    if client_input:
+        save_boq_to_db(client_input, sqft_input)
+    else:
+        st.warning("Please enter Client Name!")
 st.markdown("""
     <style>
     /* वरचा Header Toolbar लपवण्यासाठी */
