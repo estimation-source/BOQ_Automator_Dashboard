@@ -15,7 +15,20 @@ from openpyxl.utils import get_column_letter
 from PIL import Image
 import streamlit as st
 
+from st_supabase_connection import SupabaseConnection
 
+# Initialize Supabase Connection
+st_supabase = st.connection("supabase", type=SupabaseConnection)
+
+
+# Function to insert BOQ records into Supabase Database
+def save_boq_to_db(client_name, total_sqft, total_cost):
+    try:
+        data = {"client": client_name, "sqft": total_sqft, "cost": total_cost}
+        st_supabase.table("boq_records").insert(data).execute()
+        st.success("Data successfully saved to Supabase cloud!")
+    except Exception as e:
+        st.error(f"Error saving data: {e}")
 st.markdown("""
     <style>
     /* वरचा Header Toolbar लपवण्यासाठी */
