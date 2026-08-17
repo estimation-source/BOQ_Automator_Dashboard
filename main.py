@@ -978,40 +978,49 @@ if "merged_df" in st.session_state:
             st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
 
         with tab2:
-            # OC Wise Summary WITH GLASS DETAILS Column
+            # OC Wise Summary WITH GLASS DETAILS Column (Fixed for Pandas compatibility)
             df_merged_copy = df_merged.copy()
             df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
 
-            # प्रत्येक OC मधील Glass Details एकत्र (Combine) करण्याचे लॉजिक
-            # Glass Type मधील Extra Spaces काढून Total एकत्र करण्याचे लॉजिक
-            def build_glass_details(group_indices):
-                sub_df = df_merged_copy.loc[group_indices].copy()
-                
-                # Extra spaces काढणे आणि नाव क्लीन करणे
-                sub_df["CleanGlassType"] = (
-                    sub_df["GlassType"]
-                    .astype(str)
-                    .str.strip()
-                    .str.replace(r"\s+", " ", regex=True)
-                )
-                
-                summary = sub_df.groupby("CleanGlassType")["Qty"].sum()
-                details = [f"{g_type} - {qty}" for g_type, qty in summary.items() if g_type.upper() != "NOT SPECIFIED"]
+            # १. आधी प्रत्येक OC आणि GlassType नुसार Qty ची टोटल काढणे
+            df_merged_copy["CleanGlassType"] = (
+                df_merged_copy["GlassType"]
+                .astype(str)
+                .str.strip()
+                .str.replace(r"\s+", " ", regex=True)
+            )
+
+            # २. Glass Details तयार करणारे सुरक्षित फाईल-वाईज फंक्शन
+            def make_glass_string(group):
+                summary = group.groupby("CleanGlassType")["Qty"].sum()
+                details = [
+                    f"{g_type} - {qty}" 
+                    for g_type, qty in summary.items() 
+                    if g_type.upper() != "NOT SPECIFIED"
+                ]
                 return ", ".join(details) if details else "-"
 
-            # Groupby करून Total Qty, Total SQFT आणि Glass Details एकत्र काढणे
+            # ३. OC नुसार Glass Details बनवणे
+            glass_details_series = (
+                df_merged_copy.groupby("SourceFile")
+                .apply(make_glass_string, include_groups=False)
+                .reset_index(name="GLASS DETAILS")
+            )
+
+            # ४. मुख्य Total Qty आणि Total SQFT ची समरी काढणे
             oc_summary = (
                 df_merged_copy.groupby("SourceFile", as_index=False)
                 .agg(
-                    Total_Qty=("Qty", "sum"),
-                    Total_SQFT=("Total_SQFT", "sum"),
-                    GLASS_DETAILS=("GlassType", lambda x: build_glass_details(df_merged_copy.loc[x.index]))
+                    Qty=("Qty", "sum"),
+                    Total_SQFT=("Total_SQFT", "sum")
                 )
             )
-            
+
+            # ५. दोन्ही एकत्र Merge करणे
+            oc_summary = pd.merge(oc_summary, glass_details_series, on="SourceFile")
             oc_summary["Total_SQFT"] = oc_summary["Total_SQFT"].round(2)
             
-            # कॉलमचे नाव बदलेले
+            # कॉलम नावे सेट करणे
             oc_summary.columns = ["SourceFile (OC Name)", "Qty", "Total SQFT", "GLASS DETAILS"]
             
             # Sr. No. १ पासून ॲड करणे
