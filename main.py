@@ -14,6 +14,7 @@ from openpyxl.styles import Alignment, Border, Font, PatternFill, Side
 from openpyxl.utils import get_column_letter
 from PIL import Image
 import streamlit as st
+
 st.markdown("""
     <style>
     /* वरचा Header Toolbar लपवण्यासाठी */
@@ -817,7 +818,14 @@ if "merged_df" in st.session_state:
     if selected_glass != "ALL":
         filtered_df = filtered_df[filtered_df["GlassType"] == selected_glass]
 
-    st.dataframe(filtered_df, use_container_width=True, height=280)
+    # ------------------------------------------------------------
+    # 🔥 CHANGE 1: Sr. No. 1 पासून सुरू करून Pandas Index लपवला
+    # ------------------------------------------------------------
+    filtered_display_df = filtered_df.copy()
+    if "Sr. No." not in filtered_display_df.columns:
+        filtered_display_df.insert(0, "Sr. No.", range(1, len(filtered_display_df) + 1))
+
+    st.dataframe(filtered_display_df, use_container_width=True, height=280, hide_index=True)
     st.caption(f"Showing {len(filtered_df)} of {len(df_merged)} extracted records")
 
     # ============================================================
@@ -966,7 +974,8 @@ if "merged_df" in st.session_state:
         tab1, tab2, tab3 = st.tabs(["📄 MEASUREMENTS Live Preview", "📊 OC Wise Summary", "🧩 Glass Type Breakdown"])
 
         with tab1:
-            st.dataframe(req_df, use_container_width=True, height=350)
+            # इथे आधीपासूनच `Sr.No` दिलेला असल्यामुळे `hide_index=True` वापरला आहे
+            st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
 
         with tab2:
             # OC Wise Summary WITH Total SQFT Column
@@ -983,11 +992,19 @@ if "merged_df" in st.session_state:
             oc_summary["Total_SQFT"] = oc_summary["Total_SQFT"].round(2)
             oc_summary.columns = ["SourceFile (OC Name)", "Qty", "Total SQFT"]
             
-            st.dataframe(oc_summary, use_container_width=True)
+            # ------------------------------------------------------------
+            # 🔥 CHANGE 2: OC Wise Summary साठी सुद्धा Sr. No. १ पासून ॲड केला
+            # ------------------------------------------------------------
+            if "Sr. No." not in oc_summary.columns:
+                oc_summary.insert(0, "Sr. No.", range(1, len(oc_summary) + 1))
+
+            st.dataframe(oc_summary, use_container_width=True, hide_index=True)
 
         with tab3:
             glass_summary = df_merged.groupby("GlassType").agg({"Qty": "sum"}).reset_index()
-            st.dataframe(glass_summary, use_container_width=True)
+            if "Sr. No." not in glass_summary.columns:
+                glass_summary.insert(0, "Sr. No.", range(1, len(glass_summary) + 1))
+            st.dataframe(glass_summary, use_container_width=True, hide_index=True)
 
         # Download Section Box
         st.markdown("<br>", unsafe_allow_html=True)
