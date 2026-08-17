@@ -979,21 +979,21 @@ if "merged_df" in st.session_state:
             st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
 
         with tab2:
-            # OC Wise Summary WITH GLASS DETAILS Column (Auto-Correct Spelling Fix)
+            # OC Wise Summary WITH GLASS DETAILS (Shortform THGN Fix)
             df_merged_copy = df_merged.copy()
             df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
 
-            # १. टेक्स्ट क्लीन करणे आणि चुकीचे स्पेलिंग 'TOUGHNED' ऑटो-करेक्ट करणे
+            # १. टेक्स्ट क्लीन करणे, स्पेलिंग ऑटो-करेक्ट करणे आणि 'THGN' शॉर्टफॉर्म लावणे
             def clean_glass_name(text):
                 text = str(text).upper().strip()
                 text = re.sub(r"\s+", " ", text)
-                # 'TOUGHNED' ऐवजी 'TOUGHENED' करणे
-                text = text.replace("TOUGHNED", "TOUGHENED")
+                # 'TOUGHNED' किंवा 'TOUGHENED' ऐवजी शॉर्टफॉर्म 'THGN' करणे
+                text = text.replace("TOUGHENED", "THGN").replace("TOUGHNED", "THGN")
                 return text
 
             df_merged_copy["CleanGlassType"] = df_merged_copy["GlassType"].apply(clean_glass_name)
 
-            # २. Glass Details ची योग्य बेरीज करून टेक्स्ट स्ट्रिंग बनवणे
+            # २. Glass Details ची योग्य बेरीज करून short form सह टेक्स्ट बनवणे
             def make_glass_string(group):
                 summary = group.groupby("CleanGlassType")["Qty"].sum()
                 details = [
