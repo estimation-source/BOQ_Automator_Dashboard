@@ -978,23 +978,32 @@ if "merged_df" in st.session_state:
             st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
 
         with tab2:
-            # OC Wise Summary WITH Total SQFT Column
+            # OC Wise Summary WITH GLASS DETAILS Column
             df_merged_copy = df_merged.copy()
             df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
-            
+
+            # प्रत्येक OC मधील Glass Details एकत्र (Combine) करण्याचे लॉजिक
+            def build_glass_details(group):
+                summary = group.groupby("GlassType")["Qty"].sum()
+                details = [f"{g_type} - {qty}" for g_type, qty in summary.items() if g_type != "NOT SPECIFIED"]
+                return ", ".join(details) if details else "-"
+
+            # Groupby करून Total Qty, Total SQFT आणि Glass Details एकत्र काढणे
             oc_summary = (
                 df_merged_copy.groupby("SourceFile", as_index=False)
                 .agg(
                     Total_Qty=("Qty", "sum"),
-                    Total_SQFT=("Total_SQFT", "sum")
+                    Total_SQFT=("Total_SQFT", "sum"),
+                    GLASS_DETAILS=("GlassType", lambda x: build_glass_details(df_merged_copy.loc[x.index]))
                 )
             )
-            oc_summary["Total_SQFT"] = oc_summary["Total_SQFT"].round(2)
-            oc_summary.columns = ["SourceFile (OC Name)", "Qty", "Total SQFT"]
             
-            # ------------------------------------------------------------
-            # 🔥 CHANGE 2: OC Wise Summary साठी सुद्धा Sr. No. १ पासून ॲड केला
-            # ------------------------------------------------------------
+            oc_summary["Total_SQFT"] = oc_summary["Total_SQFT"].round(2)
+            
+            # कॉलमचे नाव बदलेले
+            oc_summary.columns = ["SourceFile (OC Name)", "Qty", "Total SQFT", "GLASS DETAILS"]
+            
+            # Sr. No. १ पासून ॲड करणे
             if "Sr. No." not in oc_summary.columns:
                 oc_summary.insert(0, "Sr. No.", range(1, len(oc_summary) + 1))
 
