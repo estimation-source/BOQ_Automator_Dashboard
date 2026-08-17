@@ -973,6 +973,7 @@ if "merged_df" in st.session_state:
         # Tabs View (MEASUREMENTS Live Preview)
         tab1, tab2, tab3 = st.tabs(["📄 MEASUREMENTS Live Preview", "📊 OC Wise Summary", "🧩 Glass Type Breakdown"])
 
+
         with tab1:
             # इथे आधीपासूनच `Sr.No` दिलेला असल्यामुळे `hide_index=True` वापरला आहे
             st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
@@ -1031,7 +1032,7 @@ if "merged_df" in st.session_state:
 
             st.dataframe(oc_summary, use_container_width=True, hide_index=True)
 
-       with tab3:
+        with tab3:
             # Glass Type Breakdown (Auto-Correct Spelling & Combined Sum)
             df_glass_copy = df_merged.copy()
 
@@ -1061,6 +1062,8 @@ if "merged_df" in st.session_state:
             glass_breakdown.insert(0, "Sr. No.", range(1, len(glass_breakdown) + 1))
 
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
+
+      
 
         # Download Section Box
         st.markdown("<br>", unsafe_allow_html=True)
