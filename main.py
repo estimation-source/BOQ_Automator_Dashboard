@@ -15,7 +15,11 @@ from openpyxl.utils import get_column_letter
 from PIL import Image
 import streamlit as st
 
-
+st.set_page_config(
+    page_title="Requirement Sheet Engine",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
 st.markdown("""
     <style>
