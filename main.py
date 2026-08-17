@@ -15,38 +15,44 @@ from openpyxl.utils import get_column_letter
 from PIL import Image
 import streamlit as st
 
-
 st.set_page_config(
     page_title="Requirement Sheet Engine",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# Chrome आणि इतर ब्राउझरमध्ये Sidebar Button गायब होऊ नये म्हणून Custom CSS
+# जिथे ? मार्क केला आहे तिथे आयकॉन सक्तीने दाखवण्यासाठी CSS
 st.markdown("""
     <style>
-    /* Sidebar उघडण्याचा Button (Arrow) कोणत्याही ब्राउझरमध्ये कायम दिसेल */
-    button[data-testid="stSidebarCollapsedControl"] {
+    /* 1. Sidebar Toggle Button सक्तीने Visible आणि Red करणे */
+    [data-testid="stSidebarCollapsedControl"],
+    [data-testid="stSidebarNavCollapseButton"],
+    button[aria-label="Open sidebar"],
+    button[aria-label="Close sidebar"] {
         display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
-        background-color: #f0f2f6 !important;
-        border: 1px solid #d6d6d6 !important;
-        border-radius: 6px !important;
+        background-color: #FF4B4B !important;
+        color: white !important;
+        border-radius: 8px !important;
         position: fixed !important;
-        top: 12px !important;
-        left: 12px !important;
-        z-index: 999999 !important;
+        top: 15px !important;
+        left: 15px !important;
+        z-index: 9999999 !important;
+        padding: 6px 10px !important;
+        box-shadow: 0px 4px 10px rgba(0,0,0,0.3) !important;
     }
-    
-    /* Button वर होव्हर केल्यावर रंग बदलणे */
-    button[data-testid="stSidebarCollapsedControl"]:hover {
-        background-color: #e0e2e6 !important;
-        border-color: #000000 !important;
+
+    /* 2. Arrow / Icon चा रंग पांढरा करणे */
+    [data-testid="stSidebarCollapsedControl"] svg,
+    [data-testid="stSidebarNavCollapseButton"] svg {
+        fill: white !important;
+        color: white !important;
+        width: 22px !important;
+        height: 22px !important;
     }
     </style>
 """, unsafe_allow_html=True)
-
 st.markdown("""
     <style>
     /* वरचा Header Toolbar लपवण्यासाठी */
