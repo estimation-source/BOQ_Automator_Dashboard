@@ -239,12 +239,14 @@ with st.sidebar:
     st.markdown("<div class='quick-guide-title'>💡 Quick Guide</div>", unsafe_allow_html=True)
     st.markdown(
         """
+        
         <div class='quick-guide-step'><b>1.</b> Upload multi-sheet Excel BOQ files.</div>
         <div class='quick-guide-step'><b>2.</b> Click on <b>Merge & Process Files</b>.</div>
         <div class='quick-guide-step'><b>3.</b> Review merged glass records.</div>
         <div class='quick-guide-step'><b>4.</b> Click <b>Generate Requirement Sheet (MEASUREMENTS)</b>.</div>
         <div class='quick-guide-step'><b>5.</b> Download styled Excel with auto formulas & OC breakdown.</div>
         <div class='quick-guide-step'><b>6.</b> Use <b>Reset Data</b> to clear current workspace.</div>
+        <div class='quick-guide-step'><b>7.</b> Use <b>HELLO WINSQUARE</b> to clear current workspace.</div>
         """,
         unsafe_allow_html=True
     )
