@@ -16,6 +16,47 @@ from PIL import Image
 import streamlit as st
 
 
+st.set_page_config(
+    page_title="Requirement Sheet Engine",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
+
+# Sidebar Close आणि Open सहज करण्यासाठी CSS फिक्स
+st.markdown("""
+    <style>
+    /* Header Container सक्तीने Visible ठेवणे */
+    header[data-testid="stHeader"] {
+        z-index: 99999 !important;
+        background: transparent !important;
+    }
+
+    /* Close झाल्यावर Open करण्याचा Arrow Button लाल रंगात सक्तीने दाखवणे */
+    button[data-testid="stSidebarCollapsedControl"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        background-color: #FF4B4B !important;
+        color: white !important;
+        border-radius: 8px !important;
+        position: fixed !important;
+        top: 12px !important;
+        left: 12px !important;
+        z-index: 999999 !important;
+        box-shadow: 0px 3px 8px rgba(0,0,0,0.3) !important;
+    }
+
+    /* Arrow Icon पांढऱ्या रंगात दिसणे */
+    button[data-testid="stSidebarCollapsedControl"] svg {
+        fill: white !important;
+        color: white !important;
+        width: 22px !important;
+        height: 22px !important;
+    }
+    </style>
+""", unsafe_allow_html=True)
+
+
 st.markdown("""
     <style>
     /* वरचा Header Toolbar लपवण्यासाठी */
