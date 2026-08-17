@@ -994,7 +994,13 @@ if "merged_df" in st.session_state:
         st.markdown("<br>", unsafe_allow_html=True)
 
         # Tabs View (MEASUREMENTS Live Preview)
-        tab1, tab2, tab3 = st.tabs(["📄 MEASUREMENTS Live Preview", "📊 OC Wise Summary", "🧩 Glass Type Breakdown"])
+        # Tabs View (MEASUREMENTS Live Preview & Summaries)
+        tab1, tab2, tab3, tab4 = st.tabs([
+            "📄 MEASUREMENTS Live Preview", 
+            "📊 OC Wise Summary", 
+            "🧩 Glass Type Breakdown",
+            "🪟 Window Details (OC Wise)"
+        ])
 
         with tab1:
             st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
@@ -1066,6 +1072,32 @@ if "merged_df" in st.session_state:
             glass_breakdown.insert(0, "Sr. No.", range(1, len(glass_breakdown) + 1))
 
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
+
+        # ============================================================
+        # NEW TAB 4: WINDOW DETAILS (OC WISE)
+        # ============================================================
+        with tab4:
+            df_win = df_merged.copy()
+            
+            # W x H Format (Width x Height)
+            df_win["W x H (mm)"] = df_win["Width"].astype(str) + " x " + df_win["Height"].astype(str)
+            
+            # SQFT Calculation
+            df_win["SQFT"] = ((df_win["Width"] * df_win["Height"]) / 92903.04).round(4)
+            df_win["Total SQFT"] = (df_win["SQFT"] * df_win["Qty"]).round(2)
+
+            # Columns Grouping & Rename
+            win_summary = df_win.groupby(
+                ["SourceFile", "WindowCode", "W x H (mm)"], as_index=False
+            ).agg(
+                Total_Qty=("Qty", "sum"),
+                Total_SQFT=("Total SQFT", "sum")
+            )
+
+            win_summary.columns = ["OC Name (Source File)", "Window Code", "W x H (mm)", "Qty", "Total SQFT"]
+            win_summary.insert(0, "Sr. No.", range(1, len(win_summary) + 1))
+
+            st.dataframe(win_summary, use_container_width=True, hide_index=True)
 
         # Download Section Box
         st.markdown("<br>", unsafe_allow_html=True)
