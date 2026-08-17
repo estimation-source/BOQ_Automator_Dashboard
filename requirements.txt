@@ -2,5 +2,4 @@ streamlit
 pandas
 openpyxl
 Pillow
-st-supabase-connection
-supabase
+
