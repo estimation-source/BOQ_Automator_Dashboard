@@ -15,19 +15,7 @@ from openpyxl.utils import get_column_letter
 from PIL import Image
 import streamlit as st
 
-# Sidebar चा कंट्रोल सोपा करण्यासाठी Toggle बटण
-if "show_sidebar" not in st.session_state:
-    st.session_state.show_sidebar = True
 
-# स्क्रीनवर सोपे बटण
-if st.button("👁️ Show / Hide Sidebar Options"):
-    st.session_state.show_sidebar = not st.session_state.show_sidebar
-
-# अटनुसार Sidebar दाखवणे
-if st.session_state.show_sidebar:
-    with st.sidebar:
-        st.image("logo.png", width=150) # तुमचा लोगो
-        st.write("इथे तुमचे सर्व पर्याय दिसतील")
 
 st.markdown("""
     <style>
