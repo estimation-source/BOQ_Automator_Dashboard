@@ -995,11 +995,10 @@ if "merged_df" in st.session_state:
 
         # Tabs View (MEASUREMENTS Live Preview)
         # Tabs View (MEASUREMENTS Live Preview & Summaries)
-        tab1, tab2, tab3, tab4 = st.tabs([
+        tab1, tab2, tab3 = st.tabs([
             "📄 MEASUREMENTS Live Preview", 
             "📊 OC Wise Summary", 
-            "🧩 Glass Type Breakdown",
-            "🪟 Window Details (OC Wise)"
+            "🧩 Glass Type Breakdown"
         ])
 
         with tab1:
