@@ -15,17 +15,34 @@ from openpyxl.utils import get_column_letter
 from PIL import Image
 import streamlit as st
 
-import streamlit as st
 
-st.set_page_config(page_title="Requirement Sheet Engine", layout="wide")
+st.set_page_config(
+    page_title="Requirement Sheet Engine",
+    layout="wide",
+    initial_sidebar_state="expanded"
+)
 
-# Sidebar कायम Lock ठेवण्यासाठी CSS (Arrow बटण गायब होईल आणि Sidebar नेहमी ओपन राहील)
+# Chrome आणि इतर ब्राउझरमध्ये Sidebar Button गायब होऊ नये म्हणून Custom CSS
 st.markdown("""
     <style>
-    /* Close करण्याचा Arrow बटण लपवणे */
-    button[data-testid="stSidebarCollapsedControl"],
-    button[data-testid="stSidebarNavCollapseButton"] {
-        display: none !important;
+    /* Sidebar उघडण्याचा Button (Arrow) कोणत्याही ब्राउझरमध्ये कायम दिसेल */
+    button[data-testid="stSidebarCollapsedControl"] {
+        display: flex !important;
+        visibility: visible !important;
+        opacity: 1 !important;
+        background-color: #f0f2f6 !important;
+        border: 1px solid #d6d6d6 !important;
+        border-radius: 6px !important;
+        position: fixed !important;
+        top: 12px !important;
+        left: 12px !important;
+        z-index: 999999 !important;
+    }
+    
+    /* Button वर होव्हर केल्यावर रंग बदलणे */
+    button[data-testid="stSidebarCollapsedControl"]:hover {
+        background-color: #e0e2e6 !important;
+        border-color: #000000 !important;
     }
     </style>
 """, unsafe_allow_html=True)
