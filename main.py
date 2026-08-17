@@ -16,25 +16,6 @@ from PIL import Image
 import streamlit as st
 
 
-# १. Sidebar नेहमी उघडा ठेवणे
-st.set_page_config(
-    page_title="Requirement Sheet Engine",
-    layout="wide",
-    initial_sidebar_state="expanded"
-)
-
-# २. Sidebar बंद करायची ही उजवी Arrow ची कळच गायब करणे (जेणेकरून ती कधी बंदच होणार नाही)
-st.markdown("""
-    <style>
-    /* Close करण्याचा Arrow पूर्णपणे गायब करणे */
-    [data-testid="stSidebarCollapseButton"],
-    [data-testid="stSidebarCollapsedControl"] {
-        display: none !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
-
 st.markdown("""
     <style>
     /* वरचा Header Toolbar लपवण्यासाठी */
