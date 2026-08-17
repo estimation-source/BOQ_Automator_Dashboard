@@ -16,41 +16,20 @@ from PIL import Image
 import streamlit as st
 
 
+# १. Sidebar नेहमी उघडा ठेवणे
 st.set_page_config(
     page_title="Requirement Sheet Engine",
     layout="wide",
     initial_sidebar_state="expanded"
 )
 
-# जिथे ? मार्क केला आहे तिथे आयकॉन सक्तीने दाखवण्यासाठी CSS
+# २. Sidebar बंद करायची ही उजवी Arrow ची कळच गायब करणे (जेणेकरून ती कधी बंदच होणार नाही)
 st.markdown("""
     <style>
-    /* 1. Sidebar Toggle Button सक्तीने Visible आणि Red करणे */
-    [data-testid="stSidebarCollapsedControl"],
-    [data-testid="stSidebarNavCollapseButton"],
-    button[aria-label="Open sidebar"],
-    button[aria-label="Close sidebar"] {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        background-color: #FF4B4B !important;
-        color: white !important;
-        border-radius: 8px !important;
-        position: fixed !important;
-        top: 15px !important;
-        left: 15px !important;
-        z-index: 9999999 !important;
-        padding: 6px 10px !important;
-        box-shadow: 0px 4px 10px rgba(0,0,0,0.3) !important;
-    }
-
-    /* 2. Arrow / Icon चा रंग पांढरा करणे */
-    [data-testid="stSidebarCollapsedControl"] svg,
-    [data-testid="stSidebarNavCollapseButton"] svg {
-        fill: white !important;
-        color: white !important;
-        width: 22px !important;
-        height: 22px !important;
+    /* Close करण्याचा Arrow पूर्णपणे गायब करणे */
+    [data-testid="stSidebarCollapseButton"],
+    [data-testid="stSidebarCollapsedControl"] {
+        display: none !important;
     }
     </style>
 """, unsafe_allow_html=True)
