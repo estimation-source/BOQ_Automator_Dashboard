@@ -15,23 +15,30 @@ from openpyxl.utils import get_column_letter
 from PIL import Image
 import streamlit as st
 
+# ============================================================
+# 1. Streamlit Page Config (फक्त एकदाच - सर्वात वर)
+# ============================================================
 st.set_page_config(
-    page_title="Requirement Sheet Engine",
+    page_title="WIN-SQUARE | Requirement Sheet Engine",
     layout="wide",
+    page_icon="🪟",
     initial_sidebar_state="expanded"
 )
 
-# Sidebar Close आणि Open सहज करण्यासाठी CSS फिक्स
+# ============================================================
+# 2. FIX CSS: Header चालू ठेवून Sidebar Toggle Button Visible ठेवणे
+# ============================================================
 st.markdown("""
     <style>
-    /* Header Container सक्तीने Visible ठेवणे */
+    /* Header Container पारदर्शक आणि Visible ठेवणे */
     header[data-testid="stHeader"] {
         z-index: 99999 !important;
         background: transparent !important;
     }
 
-    /* Close झाल्यावर Open करण्याचा Arrow Button लाल रंगात सक्तीने दाखवणे */
-    button[data-testid="stSidebarCollapsedControl"] {
+    /* Close झाल्यावर Open करण्याचा Button लाल रंगात सक्तीने दाखवणे */
+    button[data-testid="stSidebarCollapsedControl"],
+    button[data-testid="stSidebarNavCollapseButton"] {
         display: flex !important;
         visibility: visible !important;
         opacity: 1 !important;
@@ -46,26 +53,16 @@ st.markdown("""
     }
 
     /* Arrow Icon पांढऱ्या रंगात दिसणे */
-    button[data-testid="stSidebarCollapsedControl"] svg {
+    button[data-testid="stSidebarCollapsedControl"] svg,
+    button[data-testid="stSidebarNavCollapseButton"] svg {
         fill: white !important;
         color: white !important;
         width: 22px !important;
         height: 22px !important;
     }
-    </style>
-""", unsafe_allow_html=True)
 
-
-st.markdown("""
-    <style>
-    /* वरचा Header Toolbar लपवण्यासाठी */
-    [data-testid="stHeader"] {
-        display: none !important;
-    }
-    
-    /* खालचा Streamlit Cloud/App Status Badge लपवण्यासाठी */
+    /* खालचा Streamlit Cloud Status Badge आणि Footers लपवणे */
     [data-testid="stStatusWidget"],
-    .stAppViewerContainer > iframe,
     #MainMenu, 
     footer {
         display: none !important;
@@ -74,22 +71,12 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# ============================================================
-# Streamlit Page Config
-# ============================================================
-st.set_page_config(
-    page_title="WIN-SQUARE | Requirement Sheet Engine",
-    layout="wide",
-    page_icon="🪟",
-    initial_sidebar_state="expanded"
-)
-
 # State Management
 if "uploader_key" not in st.session_state:
     st.session_state["uploader_key"] = 0
 
 # ============================================================
-# Matching UI Layout CSS
+# 3. UI Layout & Fonts CSS
 # ============================================================
 st.markdown(
     """
@@ -280,7 +267,6 @@ with st.sidebar:
     st.markdown("<div class='quick-guide-title'>💡 Quick Guide</div>", unsafe_allow_html=True)
     st.markdown(
         """
-        
         <div class='quick-guide-step'><b>1.</b> Upload multi-sheet Excel BOQ files.</div>
         <div class='quick-guide-step'><b>2.</b> Click on <b>Merge & Process Files</b>.</div>
         <div class='quick-guide-step'><b>3.</b> Review merged glass records.</div>
@@ -302,7 +288,7 @@ st.markdown(
             <div class="hero-title-text">Requirement Sheet Engine</div>
             <div class="hero-sub-text">Enterprise BOQ Extraction, File Merger & Automatic Measurement Generator</div>
         </div>
-        
+    </div>
     """,
     unsafe_allow_html=True,
 )
@@ -860,9 +846,6 @@ if "merged_df" in st.session_state:
     if selected_glass != "ALL":
         filtered_df = filtered_df[filtered_df["GlassType"] == selected_glass]
 
-    # ------------------------------------------------------------
-    # 🔥 CHANGE 1: Sr. No. 1 पासून सुरू करून Pandas Index लपवला
-    # ------------------------------------------------------------
     filtered_display_df = filtered_df.copy()
     if "Sr. No." not in filtered_display_df.columns:
         filtered_display_df.insert(0, "Sr. No.", range(1, len(filtered_display_df) + 1))
@@ -998,10 +981,9 @@ if "merged_df" in st.session_state:
         tot_items = len(req_df)
         tot_qty = req_df["QTY"].sum()
         tot_area = req_df["TTL SQFT"].sum().round(2)
-        avg_area = (tot_area / tot_qty).round(2) if tot_qty else 0
 
         # KPI Summary Cards Row
-        k1, k2, k3, k4 = st.columns(4)
+        k1, k2, k3 = st.columns(3)
         with k1:
             st.markdown(f"<div class='kpi-card-box'><div class='kpi-title-lbl'>TOTAL ITEMS</div><div class='kpi-val-lbl'>{tot_items}</div></div>", unsafe_allow_html=True)
         with k2:
@@ -1009,33 +991,26 @@ if "merged_df" in st.session_state:
         with k3:
             st.markdown(f"<div class='kpi-card-box'><div class='kpi-title-lbl'>TOTAL GLASS SQFT</div><div class='kpi-val-lbl'>{tot_area:,.2f} Sq.Ft</div></div>", unsafe_allow_html=True)
     
-            
         st.markdown("<br>", unsafe_allow_html=True)
 
         # Tabs View (MEASUREMENTS Live Preview)
         tab1, tab2, tab3 = st.tabs(["📄 MEASUREMENTS Live Preview", "📊 OC Wise Summary", "🧩 Glass Type Breakdown"])
 
-
         with tab1:
-            # इथे आधीपासूनच `Sr.No` दिलेला असल्यामुळे `hide_index=True` वापरला आहे
             st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
 
         with tab2:
-            # OC Wise Summary WITH GLASS DETAILS (Shortform THGN Fix)
             df_merged_copy = df_merged.copy()
             df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
 
-            # १. टेक्स्ट क्लीन करणे, स्पेलिंग ऑटो-करेक्ट करणे आणि 'THGN' शॉर्टफॉर्म लावणे
             def clean_glass_name(text):
                 text = str(text).upper().strip()
                 text = re.sub(r"\s+", " ", text)
-                # 'TOUGHNED' किंवा 'TOUGHENED' ऐवजी शॉर्टफॉर्म 'THGN' करणे
                 text = text.replace("TOUGHENED", "THGN").replace("TOUGHNED", "THGN")
                 return text
 
             df_merged_copy["CleanGlassType"] = df_merged_copy["GlassType"].apply(clean_glass_name)
 
-            # २. Glass Details ची योग्य बेरीज करून short form सह टेक्स्ट बनवणे
             def make_glass_string(group):
                 summary = group.groupby("CleanGlassType")["Qty"].sum()
                 details = [
@@ -1045,14 +1020,12 @@ if "merged_df" in st.session_state:
                 ]
                 return ", ".join(details) if details else "-"
 
-            # ३. SourceFile/OC नुसार Glass Details एकत्र करणे
             glass_details_series = (
                 df_merged_copy.groupby("SourceFile")
                 .apply(make_glass_string, include_groups=False)
                 .reset_index(name="GLASS DETAILS")
             )
 
-            # ४. Total Qty आणि Total SQFT ची समरी काढणे
             oc_summary = (
                 df_merged_copy.groupby("SourceFile", as_index=False)
                 .agg(
@@ -1061,34 +1034,26 @@ if "merged_df" in st.session_state:
                 )
             )
 
-            # ५. दोन्ही एकत्र Merge करणे
             oc_summary = pd.merge(oc_summary, glass_details_series, on="SourceFile")
             oc_summary["Total_SQFT"] = oc_summary["Total_SQFT"].round(2)
             
-            # कॉलम नावे अपडेट करणे
             oc_summary.columns = ["SourceFile (OC Name)", "Qty", "Total SQFT", "GLASS DETAILS"]
             
-            # Sr. No. १ पासून जोडणे
             if "Sr. No." not in oc_summary.columns:
                 oc_summary.insert(0, "Sr. No.", range(1, len(oc_summary) + 1))
 
             st.dataframe(oc_summary, use_container_width=True, hide_index=True)
 
         with tab3:
-            # Glass Type Breakdown (Auto-Correct Spelling & Combined Sum)
             df_glass_copy = df_merged.copy()
 
-            # १. स्पेलिंग ऑटो-करेक्ट आणि टेक्स्ट क्लीनिंग फाईल लेव्हलवर करणे
             def clean_glass_name(text):
                 text = str(text).upper().strip()
                 text = re.sub(r"\s+", " ", text)
-                # 'TOUGHNED' ऐवजी 'TOUGHENED' दुरुस्त करणे
                 text = text.replace("TOUGHNED", "TOUGHENED")
                 return text
 
             df_glass_copy["CleanGlassType"] = df_glass_copy["GlassType"].apply(clean_glass_name)
-
-            # २. 'NOT SPECIFIED' फिल्टर करून स्वच्छ नावानुसार बेरीज (Sum) करणे
             df_glass_filtered = df_glass_copy[df_glass_copy["CleanGlassType"] != "NOT SPECIFIED"]
 
             glass_breakdown = (
@@ -1097,15 +1062,10 @@ if "merged_df" in st.session_state:
                 .sort_values(by="Qty", ascending=False)
             )
 
-            # ३. कॉलमचे नाव मूळ नावासारखेच ठेवणे
             glass_breakdown.columns = ["GlassType", "Qty"]
-
-            # ४. Sr. No. १ पासून जोडणे
             glass_breakdown.insert(0, "Sr. No.", range(1, len(glass_breakdown) + 1))
 
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
-
-      
 
         # Download Section Box
         st.markdown("<br>", unsafe_allow_html=True)
