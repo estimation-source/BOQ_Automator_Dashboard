@@ -246,7 +246,6 @@ with st.sidebar:
         <div class='quick-guide-step'><b>4.</b> Click <b>Generate Requirement Sheet (MEASUREMENTS)</b>.</div>
         <div class='quick-guide-step'><b>5.</b> Download styled Excel with auto formulas & OC breakdown.</div>
         <div class='quick-guide-step'><b>6.</b> Use <b>Reset Data</b> to clear current workspace.</div>
-        <div class='quick-guide-step'><b>7.</b> <b>HELLO WINSQUARE</b>.</div>
         """,
         unsafe_allow_html=True
     )
