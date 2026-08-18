@@ -454,24 +454,28 @@ def detect_column(header_row: List[str], keyword_groups: List[Any]) -> Optional[
 def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
     normalized = normalize_header_row(header_row)
 
-    # 1. Frame Width & Frame Height साठी स्वतंत्र Match (F.WIDTH vs F.HEIGHT फिक्स करण्यासाठी)
+    # --- FRAME WIDTH & FRAME HEIGHT DETECTION (Strict Check) ---
     f_w_col = None
     f_h_col = None
 
     for idx, text in enumerate(normalized):
-        t = re.sub(r"[^A-Z]", "", text)
-        if t in ["FWIDTH", "FW", "FRAMEWIDTH", "FRAMEW"]:
-            f_w_col = idx
-        elif t in ["FHEIGHT", "FH", "FRAMEHEIGHT", "FRAMEH"]:
-            f_h_col = idx
+        t = re.sub(r"[^A-Z]", "", str(text).upper())
+        # Frame Width शोधणे
+        if t in ["FWIDTH", "FW", "FRAMEWIDTH", "FRAMEW", "FWIDTHMM"] or "FWIDTH" in t:
+            if f_w_col is None:
+                f_w_col = idx
+        # Frame Height शोधणे
+        elif t in ["FHEIGHT", "FH", "FRAMEHEIGHT", "FRAMEH", "FHEIGHTMM"] or "FHEIGHT" in t:
+            if f_h_col is None:
+                f_h_col = idx
 
-    # जर वरच्या Direct Matching मध्ये सापडले नाही तरच KEYWORDS मधून शोधणे
+    # जर डायरेक्ट मॅचमध्ये नाही सापडले तर KEYWORDS वापरणे
     if f_w_col is None:
-        f_w_col = detect_column(normalized, KEYWORDS["FRAME_WIDTH"])
+        f_w_col = detect_column(normalized, KEYWORDS.get("FRAME_WIDTH", []))
     if f_h_col is None:
-        f_h_col = detect_column(normalized, KEYWORDS["FRAME_HEIGHT"])
+        f_h_col = detect_column(normalized, KEYWORDS.get("FRAME_HEIGHT", []))
 
-    # 2. मूळ Columns Mapping (Glass + Base logic)
+    # --- BASE COLUMNS MAPPING ---
     columns = {
         "code": detect_column(normalized, KEYWORDS["CODE"]),
         "width": detect_column(normalized, KEYWORDS["WIDTH"]),
@@ -482,7 +486,7 @@ def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
         "frame_height": f_h_col,
     }
 
-    # 3. तुमचा मूळ Glass Width Fallback Logic (जसाच्या तसा - No Touch!)
+    # --- Glass Width Fallback Logic (तुमचा मूळ कोड - NO TOUCH) ---
     if columns["width"] is None:
         for kw in [
             ["S", "GLS", "W"], ["S", "GL", "W"], ["GLS", "W"], ["GL", "W"],
@@ -494,7 +498,7 @@ def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
                 columns["width"] = col
                 break
 
-    # 4. तुमचा मूळ Glass Height Fallback Logic (जसाच्या तसा - No Touch!)
+    # --- Glass Height Fallback Logic (तुमचा मूळ कोड - NO TOUCH) ---
     if columns["height"] is None:
         for kw in [
             ["S", "GLS", "H"], ["S", "GL", "H"], ["GLS", "H"], ["GL", "H"],
@@ -507,7 +511,6 @@ def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
                 break
 
     return columns
-
 
 
 def is_business_header(row: pd.Series) -> bool:
