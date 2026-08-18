@@ -232,10 +232,6 @@ def get_image_path(filename):
 # SIDEBAR
 # =========================================================
 with st.sidebar:
-    st.markdown("### 📌 Navigation")
-    st.page_link("main.py", label="🪟 Glass Requirements", icon="🏠")
-    st.page_link("pages/1_Frame_Details.py", label="🖼️ Frame Size (WxH) & SQFT", icon="🖼️")
-    st.markdown("---")
     logo_file = get_image_path("logo.png")
     if os.path.exists(logo_file):
         col_s1, col_s2, col_s3 = st.columns([1, 2, 1])
@@ -687,7 +683,7 @@ def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file:
         if qty is None:
             qty = 1
 
-        # 🎯 **FROSTED GLASS ignore करणे**
+        # FROSTED GLASS ignore करणे
         if glass_raw and "FROSTED" in str(glass_raw).upper():
             continue
 
@@ -988,7 +984,7 @@ if "merged_df" in st.session_state:
             st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
 
         with tab2:
-            # 📊 OC WISE SUMMARY (Only Non-Frosted Glass Total SQFT and Specs)
+            # OC WISE SUMMARY (Only Non-Frosted Glass Total SQFT and Specs)
             df_merged_copy = df_merged.copy()
             df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
 
@@ -1065,6 +1061,3 @@ if "merged_df" in st.session_state:
             file_name="REQUIREMENT_SHEET_MEASUREMENTS.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
-        # main.py च्या शेवटी हे जोडा जेणेकरून Streamlit फक्त main.py डायरेक्ट रन केल्यावरच चालेल
-if __name__ == "__main__":
-    pass  # तुमचा मूळ UI रन होईल
