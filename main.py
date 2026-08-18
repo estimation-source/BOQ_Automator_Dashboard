@@ -414,18 +414,75 @@ def detect_column(header_row: List[str], keyword_groups: List[Any]) -> Optional[
     return None
 
 
+#def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
+#    normalized = normalize_header_row(header_row)
+#    columns = {
+#       "code": detect_column(normalized, KEYWORDS["CODE"]),
+#        "width": detect_column(normalized, KEYWORDS["WIDTH"]),
+#        "height": detect_column(normalized, KEYWORDS["HEIGHT"]),
+#        "qty": detect_column(normalized, KEYWORDS["QTY"]),
+#        "glass": detect_column(normalized, KEYWORDS["GLASS"]),
+#        "frame_width": detect_column(normalized, KEYWORDS["FRAME_WIDTH"]),
+#        "frame_height": detect_column(normalized, KEYWORDS["FRAME_HEIGHT"]),
+#    }
+
+#    if columns["width"] is None:
+#        for kw in [
+#            ["S", "GLS", "W"], ["S", "GL", "W"], ["GLS", "W"], ["GL", "W"],
+#            ["S", "GZ", "W"], ["GZ", "W"], ["FWIDTH"], ["F", "WIDTH"],
+#            ["SWIDTH"], ["S", "WIDTH"],
+#        ]:
+#            col = detect_column(normalized, kw)
+#            if col is not None:
+#                columns["width"] = col
+#                break
+
+#    if columns["height"] is None:
+#        for kw in [
+#            ["S", "GLS", "H"], ["S", "GL", "H"], ["GLS", "H"], ["GL", "H"],
+#            ["S", "GZ", "H"], ["GZ", "H"], ["FHEIGHT"], ["F", "HEIGHT"],
+#            ["SHEIGHT"], ["S", "HEIGHT"],
+#        ]:
+#            col = detect_column(normalized, kw)
+#            if col is not None:
+#                columns["height"] = col
+#                break
+
+#    return columns
+
+
 def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
     normalized = normalize_header_row(header_row)
+
+    # 1. Frame Width & Frame Height साठी स्वतंत्र Match (F.WIDTH vs F.HEIGHT फिक्स करण्यासाठी)
+    f_w_col = None
+    f_h_col = None
+
+    for idx, text in enumerate(normalized):
+        t = re.sub(r"[^A-Z]", "", text)
+        if t in ["FWIDTH", "FW", "FRAMEWIDTH", "FRAMEW"]:
+            f_w_col = idx
+        elif t in ["FHEIGHT", "FH", "FRAMEHEIGHT", "FRAMEH"]:
+            f_h_col = idx
+
+    # जर वरच्या Direct Matching मध्ये सापडले नाही तरच KEYWORDS मधून शोधणे
+    if f_w_col is None:
+        f_w_col = detect_column(normalized, KEYWORDS["FRAME_WIDTH"])
+    if f_h_col is None:
+        f_h_col = detect_column(normalized, KEYWORDS["FRAME_HEIGHT"])
+
+    # 2. मूळ Columns Mapping (Glass + Base logic)
     columns = {
         "code": detect_column(normalized, KEYWORDS["CODE"]),
         "width": detect_column(normalized, KEYWORDS["WIDTH"]),
         "height": detect_column(normalized, KEYWORDS["HEIGHT"]),
         "qty": detect_column(normalized, KEYWORDS["QTY"]),
         "glass": detect_column(normalized, KEYWORDS["GLASS"]),
-        "frame_width": detect_column(normalized, KEYWORDS["FRAME_WIDTH"]),
-        "frame_height": detect_column(normalized, KEYWORDS["FRAME_HEIGHT"]),
+        "frame_width": f_w_col,
+        "frame_height": f_h_col,
     }
 
+    # 3. तुमचा मूळ Glass Width Fallback Logic (जसाच्या तसा - No Touch!)
     if columns["width"] is None:
         for kw in [
             ["S", "GLS", "W"], ["S", "GL", "W"], ["GLS", "W"], ["GL", "W"],
@@ -437,6 +494,7 @@ def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
                 columns["width"] = col
                 break
 
+    # 4. तुमचा मूळ Glass Height Fallback Logic (जसाच्या तसा - No Touch!)
     if columns["height"] is None:
         for kw in [
             ["S", "GLS", "H"], ["S", "GL", "H"], ["GLS", "H"], ["GL", "H"],
@@ -449,6 +507,7 @@ def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
                 break
 
     return columns
+
 
 
 def is_business_header(row: pd.Series) -> bool:
