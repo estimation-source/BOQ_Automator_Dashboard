@@ -1061,3 +1061,6 @@ if "merged_df" in st.session_state:
             file_name="REQUIREMENT_SHEET_MEASUREMENTS.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
+        # main.py च्या शेवटी हे जोडा जेणेकरून Streamlit फक्त main.py डायरेक्ट रन केल्यावरच चालेल
+if __name__ == "__main__":
+    pass  # तुमचा मूळ UI रन होईल
