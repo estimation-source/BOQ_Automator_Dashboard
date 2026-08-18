@@ -1,1 +1,1 @@
-streamlit run window_frame_app.py
+streamlit run main.py
