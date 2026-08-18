@@ -232,6 +232,10 @@ def get_image_path(filename):
 # SIDEBAR
 # =========================================================
 with st.sidebar:
+    st.markdown("### 📌 Navigation")
+    st.page_link("main.py", label="🪟 Glass Requirements", icon="🏠")
+    st.page_link("pages/1_Frame_Details.py", label="🖼️ Frame Size (WxH) & SQFT", icon="🖼️")
+    st.markdown("---")
     logo_file = get_image_path("logo.png")
     if os.path.exists(logo_file):
         col_s1, col_s2, col_s3 = st.columns([1, 2, 1])
