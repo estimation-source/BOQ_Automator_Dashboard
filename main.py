@@ -142,17 +142,6 @@ st.markdown(
         margin-top: 4px;
     }
 
-    .engine-active-tag {
-        background-color: #2563eb;
-        color: white;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 6px 14px;
-        border-radius: 20px;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-    }
-
     /* Step Titles */
     .step-title {
         font-size: 16px;
@@ -314,6 +303,14 @@ KEYWORDS = {
     ],
     "QTY": ["QTY"],
     "GLASS": [["GLASS"], ["DESP"]],
+    "FRAME_WIDTH": [
+        ["FRAME", "W"], ["FRAME", "WIDTH"], ["FWIDTH"], ["F", "W"], 
+        ["OUTER", "W"], ["OUTER", "WIDTH"], ["F", "WIDTH"]
+    ],
+    "FRAME_HEIGHT": [
+        ["FRAME", "H"], ["FRAME", "HEIGHT"], ["FHEIGHT"], ["F", "H"], 
+        ["OUTER", "H"], ["OUTER", "HEIGHT"], ["F", "HEIGHT"]
+    ],
 }
 
 
@@ -334,6 +331,8 @@ class HeaderInfo:
     height_col: Optional[int] = None
     qty_col: Optional[int] = None
     glass_col: Optional[int] = None
+    frame_w_col: Optional[int] = None
+    frame_h_col: Optional[int] = None
     columns: Dict[str, Optional[int]] = field(default_factory=dict)
 
 
@@ -353,6 +352,8 @@ class GlassRecord:
     GlassType: str
     SourceFile: str
     SheetName: str
+    FrameWidth: Optional[int] = None
+    FrameHeight: Optional[int] = None
 
 
 def normalize_header(text: Any) -> str:
@@ -419,6 +420,8 @@ def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
         "height": detect_column(normalized, KEYWORDS["HEIGHT"]),
         "qty": detect_column(normalized, KEYWORDS["QTY"]),
         "glass": detect_column(normalized, KEYWORDS["GLASS"]),
+        "frame_width": detect_column(normalized, KEYWORDS["FRAME_WIDTH"]),
+        "frame_height": detect_column(normalized, KEYWORDS["FRAME_HEIGHT"]),
     }
 
     if columns["width"] is None:
@@ -484,6 +487,8 @@ def find_header_blocks(dataframe: pd.DataFrame) -> List[HeaderInfo]:
             height_col=columns["height"],
             qty_col=columns["qty"],
             glass_col=columns["glass"],
+            frame_w_col=columns["frame_width"],
+            frame_h_col=columns["frame_height"],
             columns=columns,
         )
         headers.append(header)
@@ -696,10 +701,15 @@ def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file:
         first_row = buffer.iloc[0]
         window = build_window_code(first_row, block.header)
 
+        # Glass Dimensions (तसेच ठेवले आहेत)
         width = collect_numeric_from_buffer(buffer, block.header.width_col)
         height = collect_numeric_from_buffer(buffer, block.header.height_col)
         qty = collect_numeric_from_buffer(buffer, block.header.qty_col)
         glass_raw = collect_glass(buffer, block.header)
+
+        # Frame Dimensions Capture करणे
+        frame_w = collect_numeric_from_buffer(buffer, block.header.frame_w_col) if block.header.frame_w_col is not None else width
+        frame_h = collect_numeric_from_buffer(buffer, block.header.frame_h_col) if block.header.frame_h_col is not None else height
 
         if not window or width is None or height is None:
             continue
@@ -720,6 +730,8 @@ def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file:
                 GlassType=glass,
                 SourceFile=source_file,
                 SheetName=sheet_name,
+                FrameWidth=frame_w,
+                FrameHeight=frame_h,
             )
         )
 
@@ -993,12 +1005,12 @@ if "merged_df" in st.session_state:
     
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Tabs View (MEASUREMENTS Live Preview)
         # Tabs View (MEASUREMENTS Live Preview & Summaries)
-        tab1, tab2, tab3 = st.tabs([
+        tab1, tab2, tab3, tab4 = st.tabs([
             "📄 MEASUREMENTS Live Preview", 
             "📊 OC Wise Summary", 
-            "🧩 Glass Type Breakdown"
+            "🧩 Glass Type Breakdown",
+            "🪟 Window Details (Frame Size WxH)"
         ])
 
         with tab1:
@@ -1072,7 +1084,40 @@ if "merged_df" in st.session_state:
 
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
 
-   
+        # ============================================================
+        # TAB 4: WINDOW DETAILS (FRAME SIZE W X H)
+        # ============================================================
+        with tab4:
+            df_win = df_merged.copy()
+            
+            # Frame dimensions नसेल तर Glass Dimensions चा बॅकअप
+            if "FrameWidth" not in df_win.columns or df_win["FrameWidth"].isnull().all():
+                df_win["FrameWidth"] = df_win["Width"]
+            if "FrameHeight" not in df_win.columns or df_win["FrameHeight"].isnull().all():
+                df_win["FrameHeight"] = df_win["Height"]
+
+            df_win["FrameWidth"] = df_win["FrameWidth"].fillna(df_win["Width"])
+            df_win["FrameHeight"] = df_win["FrameHeight"].fillna(df_win["Height"])
+
+            # Frame W x H Format (mm)
+            df_win["Frame W x H (mm)"] = df_win["FrameWidth"].astype(int).astype(str) + " x " + df_win["FrameHeight"].astype(int).astype(str)
+            
+            # Frame SQFT Calculation
+            df_win["Frame SQFT"] = ((df_win["FrameWidth"] * df_win["FrameHeight"]) / 92903.04).round(4)
+            df_win["Total Frame SQFT"] = (df_win["Frame SQFT"] * df_win["Qty"]).round(2)
+
+            # Summarize Grouping by OC Name and Window Code
+            win_summary = df_win.groupby(
+                ["SourceFile", "WindowCode", "Frame W x H (mm)"], as_index=False
+            ).agg(
+                Total_Qty=("Qty", "sum"),
+                Total_Frame_SQFT=("Total Frame SQFT", "sum")
+            )
+
+            win_summary.columns = ["OC Name (Source File)", "Window Code", "Frame W x H (mm)", "Qty", "Total Frame SQFT"]
+            win_summary.insert(0, "Sr. No.", range(1, len(win_summary) + 1))
+
+            st.dataframe(win_summary, use_container_width=True, hide_index=True)
 
         # Download Section Box
         st.markdown("<br>", unsafe_allow_html=True)
