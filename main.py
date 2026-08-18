@@ -16,7 +16,7 @@ from PIL import Image
 import streamlit as st
 
 # ============================================================
-# 1. Streamlit Page Config (फक्त एकदाच - सर्वात वर)
+# 1. Streamlit Page Config
 # ============================================================
 st.set_page_config(
     page_title="WIN-SQUARE | Requirement Sheet Engine",
@@ -30,13 +30,11 @@ st.set_page_config(
 # ============================================================
 st.markdown("""
     <style>
-    /* Header Container पारदर्शक आणि Visible ठेवणे */
     header[data-testid="stHeader"] {
         z-index: 99999 !important;
         background: transparent !important;
     }
 
-    /* Close झाल्यावर Open करण्याचा Button लाल रंगात सक्तीने दाखवणे */
     button[data-testid="stSidebarCollapsedControl"],
     button[data-testid="stSidebarNavCollapseButton"] {
         display: flex !important;
@@ -52,7 +50,6 @@ st.markdown("""
         box-shadow: 0px 3px 8px rgba(0,0,0,0.3) !important;
     }
 
-    /* Arrow Icon पांढऱ्या रंगात दिसणे */
     button[data-testid="stSidebarCollapsedControl"] svg,
     button[data-testid="stSidebarNavCollapseButton"] svg {
         fill: white !important;
@@ -61,7 +58,6 @@ st.markdown("""
         height: 22px !important;
     }
 
-    /* खालचा Streamlit Cloud Status Badge आणि Footers लपवणे */
     [data-testid="stStatusWidget"],
     #MainMenu, 
     footer {
@@ -95,7 +91,6 @@ st.markdown(
         max-width: 98%;
     }
 
-    /* Left Sidebar Styling */
     [data-testid="stSidebar"] {
         background-color: #f1f5f9;
         border-right: 1px solid #e2e8f0;
@@ -116,7 +111,6 @@ st.markdown(
         line-height: 1.4;
     }
 
-    /* Top Banner Card */
     .hero-container {
         background: #ffffff;
         border-radius: 16px;
@@ -142,18 +136,6 @@ st.markdown(
         margin-top: 4px;
     }
 
-    .engine-active-tag {
-        background-color: #2563eb;
-        color: white;
-        font-size: 11px;
-        font-weight: 700;
-        padding: 6px 14px;
-        border-radius: 20px;
-        letter-spacing: 0.5px;
-        text-transform: uppercase;
-    }
-
-    /* Step Titles */
     .step-title {
         font-size: 16px;
         font-weight: 700;
@@ -164,7 +146,6 @@ st.markdown(
         gap: 8px;
     }
 
-    /* Metric/KPI Summary Cards */
     .kpi-card-box {
         background: #ffffff;
         border: 1px solid #e2e8f0;
@@ -188,7 +169,6 @@ st.markdown(
         margin-top: 6px;
     }
 
-    /* Blue Action Buttons */
     div.stButton > button[kind="primary"] {
         background-color: #2563eb !important;
         color: #ffffff !important;
@@ -199,7 +179,6 @@ st.markdown(
         padding: 8px 20px !important;
     }
 
-    /* Red Reset Button */
     div.stButton > button[kind="secondary"] {
         background-color: #dc2626 !important;
         color: #ffffff !important;
@@ -210,7 +189,6 @@ st.markdown(
         padding: 8px 20px !important;
     }
 
-    /* Green Download Button */
     div.stDownloadButton > button {
         background-color: #059669 !important;
         color: #ffffff !important;
@@ -221,7 +199,6 @@ st.markdown(
         padding: 10px 22px !important;
     }
 
-    /* Tab Custom Styling */
     .stTabs [data-baseweb="tab-list"] {
         gap: 16px;
         border-bottom: 1px solid #e2e8f0;
@@ -739,7 +716,7 @@ def parse_business_sheet(dataframe: pd.DataFrame, source_file: str, sheet_name: 
 
 def load_excel_with_calculated_values(file) -> Dict[str, pd.DataFrame]:
     file_bytes = io.BytesIO(file.read())
-    file.seek(0)  # Reset pointer
+    file.seek(0)
     wb = openpyxl.load_workbook(file_bytes, data_only=True)
     workbook_dict = {}
 
@@ -761,7 +738,7 @@ def load_excel_with_calculated_values(file) -> Dict[str, pd.DataFrame]:
 
 
 # ============================================================
-# NEW DEDICATED FRAME READER LOGIC (CLIENT DETAILS / MEASUREMENT SHEET ONLY)
+# NEW ENHANCED FRAME READER LOGIC (HANDLES SCREENSHOT SPECIFICATION SHEETS)
 # ============================================================
 def extract_measurement_sheet_frame_data(file_obj, file_name: str) -> pd.DataFrame:
     try:
@@ -771,91 +748,131 @@ def extract_measurement_sheet_frame_data(file_obj, file_name: str) -> pd.DataFra
     except Exception:
         return pd.DataFrame()
 
-    meas_sheet = None
-    for s in xls.sheet_names:
-        if "MEASUREMENT" in s.upper():
-            meas_sheet = s
-            break
-            
-    if not meas_sheet and len(xls.sheet_names) > 1:
-        meas_sheet = xls.sheet_names[1]
-
-    if not meas_sheet:
-        return pd.DataFrame()
-
-    try:
-        df = pd.read_excel(xls, sheet_name=meas_sheet, header=None)
-    except Exception:
-        return pd.DataFrame()
-
-    code_col = width_col = height_col = sqft_col = qty_col = None
-    header_idx = None
-
-    for r_idx in range(min(len(df), 50)):
-        row = df.iloc[r_idx]
-        row_str = " ".join([str(val).upper() for val in row.dropna()])
-        if "WINDOW" in row_str or "WIDTH" in row_str or "DIMENSION" in row_str or "CODE" in row_str:
-            c_code = c_w = c_h = c_sqft = c_qty = None
-            for c_idx, val in enumerate(row):
-                val_u = str(val).upper().strip()
-                val_clean = re.sub(r"[^A-Z0-9]", "", val_u)
-                if any(k in val_clean for k in ["CODE", "WINDOWCODE", "WINDOW"]):
-                    if c_code is None: c_code = c_idx
-                elif "WIDTH" in val_clean or "FWIDTH" in val_clean or "FW" in val_clean:
-                    if c_w is None: c_w = c_idx
-                elif "HEIGHT" in val_clean or "FHEIGHT" in val_clean or "FH" in val_clean:
-                    if c_h is None: c_h = c_idx
-                elif "SQFT" in val_clean or "AREA" in val_clean or "SQ" in val_clean:
-                    if c_sqft is None: c_sqft = c_idx
-                elif "QTY" in val_clean or "QUANTITY" in val_clean or "NOS" in val_clean:
-                    if c_qty is None: c_qty = c_idx
-
-            if c_code is not None and (c_w is not None or c_h is not None):
-                header_idx = r_idx
-                code_col, width_col, height_col, sqft_col, qty_col = c_code, c_w, c_h, c_sqft, c_qty
-                break
-
-    if header_idx is None:
-        return pd.DataFrame()
-
     records = []
-    for idx in range(header_idx + 1, len(df)):
-        row = df.iloc[idx]
-        if code_col >= len(row) or pd.isna(row.iloc[code_col]):
-            continue
-        code_val = str(row.iloc[code_col]).strip()
-        if not code_val or code_val.lower() in ["nan", "none", "total", "code", "sr.no.", "s.no", "description"]:
-            continue
 
+    for s_name in xls.sheet_names:
         try:
-            f_width = safe_numeric(row.iloc[width_col]) if width_col is not None and width_col < len(row) else None
-            f_height = safe_numeric(row.iloc[height_col]) if height_col is not None and height_col < len(row) else None
-            qty = safe_numeric(row.iloc[qty_col]) if qty_col is not None and qty_col < len(row) else 1
-            if qty is None or qty <= 0:
-                qty = 1
-
-            if sqft_col is not None and sqft_col < len(row) and pd.notna(row.iloc[sqft_col]):
-                try:
-                    frame_sqft = float(re.sub(r"[^\d.]", "", str(row.iloc[sqft_col])))
-                except:
-                    frame_sqft = round((f_width * f_height) / 92903.04, 4) if (f_width and f_height) else 0.0
-            else:
-                frame_sqft = round((f_width * f_height) / 92903.04, 4) if (f_width and f_height) else 0.0
-
-            if f_width and f_height:
-                records.append({
-                    "SourceFile": file_name,
-                    "WindowCode": code_val,
-                    "FrameWidth": f_width,
-                    "FrameHeight": f_height,
-                    "Frame W x H (mm)": f"{f_width} x {f_height}",
-                    "Frame SQFT": frame_sqft,
-                    "Qty": qty
-                })
+            df = pd.read_excel(xls, sheet_name=s_name, header=None)
         except Exception:
             continue
 
-    return pd.DataFrame(records)
+        # Pattern 1: Vertical Layout (Like Quote/Spec Sheets in Screenshot 2)
+        # Scan for "Code:" or "CODE" followed by "WIDTH" and "HEIGHT" in subsequent rows
+        current_code = None
+        current_w = None
+        current_h = None
+
+        for r_idx in range(len(df)):
+            row = df.iloc[r_idx]
+            row_str_list = [str(val).strip() for val in row.dropna()]
+            row_text = " ".join(row_str_list).upper()
+
+            # Check for Window Code (e.g., Code: W1 or Code W1)
+            for c_idx, val in enumerate(row):
+                val_u = str(val).upper().strip()
+                if val_u in ["CODE:", "CODE"]:
+                    # Code value is in next column
+                    if c_idx + 1 < len(row) and pd.notna(row.iloc[c_idx + 1]):
+                        c_val = str(row.iloc[c_idx + 1]).strip()
+                        if c_val and c_val.lower() != "nan":
+                            current_code = c_val
+
+            # Check for Vertical WIDTH / HEIGHT labels
+            if "WIDTH" in row_text and current_code:
+                for c_idx, val in enumerate(row):
+                    if str(val).upper().strip() == "WIDTH":
+                        # Value usually right next to it or in next 2 cells
+                        for offset in [1, 2, 3]:
+                            if c_idx + offset < len(row):
+                                num_val = safe_numeric(row.iloc[c_idx + offset])
+                                if num_val:
+                                    current_w = num_val
+                                    break
+
+            if "HEIGHT" in row_text and current_code:
+                for c_idx, val in enumerate(row):
+                    if str(val).upper().strip() == "HEIGHT":
+                        for offset in [1, 2, 3]:
+                            if c_idx + offset < len(row):
+                                num_val = safe_numeric(row.iloc[c_idx + offset])
+                                if num_val:
+                                    current_h = num_val
+                                    break
+
+            # If both found for current code
+            if current_code and current_w and current_h:
+                frame_sqft = round((current_w * current_h) / 92903.04, 4)
+                records.append({
+                    "SourceFile": file_name,
+                    "SheetName": s_name,
+                    "WindowCode": current_code,
+                    "FrameWidth": current_w,
+                    "FrameHeight": current_h,
+                    "Frame W x H (mm)": f"{current_w} x {current_h}",
+                    "Frame SQFT": frame_sqft,
+                    "Qty": 1
+                })
+                current_code = None
+                current_w = None
+                current_h = None
+
+        # Pattern 2: Horizontal Table Layout (Standard Measurement Tables)
+        if not records:
+            code_col = width_col = height_col = qty_col = None
+            header_idx = None
+
+            for r_idx in range(min(len(df), 50)):
+                row = df.iloc[r_idx]
+                row_str = " ".join([str(val).upper() for val in row.dropna()])
+                if "WINDOW" in row_str or "WIDTH" in row_str or "DIMENSION" in row_str or "CODE" in row_str:
+                    c_code = c_w = c_h = c_qty = None
+                    for c_idx, val in enumerate(row):
+                        val_clean = re.sub(r"[^A-Z0-9]", "", str(val).upper().strip())
+                        if any(k in val_clean for k in ["CODE", "WINDOWCODE", "WINDOW"]):
+                            if c_code is None: c_code = c_idx
+                        elif "WIDTH" in val_clean or "FWIDTH" in val_clean or "FRAMEWIDTH" in val_clean:
+                            if c_w is None: c_w = c_idx
+                        elif "HEIGHT" in val_clean or "FHEIGHT" in val_clean or "FRAMEHEIGHT" in val_clean:
+                            if c_h is None: c_h = c_idx
+                        elif "QTY" in val_clean or "QUANTITY" in val_clean or "NOS" in val_clean:
+                            if c_qty is None: c_qty = c_idx
+
+                    if c_code is not None and (c_w is not None or c_h is not None):
+                        header_idx = r_idx
+                        code_col, width_col, height_col, qty_col = c_code, c_w, c_h, c_qty
+                        break
+
+            if header_idx is not None:
+                for idx in range(header_idx + 1, len(df)):
+                    row = df.iloc[idx]
+                    if code_col >= len(row) or pd.isna(row.iloc[code_col]):
+                        continue
+                    code_val = str(row.iloc[code_col]).strip()
+                    if not code_val or code_val.lower() in ["nan", "none", "total", "code", "sr.no.", "s.no"]:
+                        continue
+
+                    f_width = safe_numeric(row.iloc[width_col]) if width_col is not None and width_col < len(row) else None
+                    f_height = safe_numeric(row.iloc[height_col]) if height_col is not None and height_col < len(row) else None
+                    qty = safe_numeric(row.iloc[qty_col]) if qty_col is not None and qty_col < len(row) else 1
+                    if qty is None or qty <= 0:
+                        qty = 1
+
+                    if f_width and f_height:
+                        records.append({
+                            "SourceFile": file_name,
+                            "SheetName": s_name,
+                            "WindowCode": code_val,
+                            "FrameWidth": f_width,
+                            "FrameHeight": f_height,
+                            "Frame W x H (mm)": f"{f_width} x {f_height}",
+                            "Frame SQFT": round((f_width * f_height) / 92903.04, 4),
+                            "Qty": qty
+                        })
+
+    df_out = pd.DataFrame(records)
+    if not df_out.empty:
+        df_out = df_out.drop_duplicates(subset=["SourceFile", "WindowCode", "FrameWidth", "FrameHeight"])
+    return df_out
 
 
 def process_uploaded_files(uploaded_files) -> Tuple[pd.DataFrame, pd.DataFrame]:
@@ -864,14 +881,14 @@ def process_uploaded_files(uploaded_files) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     for file in uploaded_files:
         try:
-            # 1. Glass Records Extraction
+            # 1. Extract Glass Records
             workbook_dict = load_excel_with_calculated_values(file)
             business_sheets = find_business_sheets(workbook_dict)
             for sheet_name, df in business_sheets:
                 records = parse_business_sheet(df, file.name, sheet_name)
                 all_records.extend(records)
 
-            # 2. Measurement Frame Data Extraction
+            # 2. Extract Frame WxH Records from Client Details / Spec Sheets
             df_frame = extract_measurement_sheet_frame_data(file, file.name)
             if not df_frame.empty:
                 all_frame_records.append(df_frame)
@@ -881,6 +898,18 @@ def process_uploaded_files(uploaded_files) -> Tuple[pd.DataFrame, pd.DataFrame]:
 
     df_res = pd.DataFrame([asdict(r) for r in all_records]).reset_index(drop=True) if all_records else pd.DataFrame()
     df_frame_res = pd.concat(all_frame_records, ignore_index=True) if all_frame_records else pd.DataFrame()
+
+    # Merge Frame Data into Master Table if matching Window Code & File Name found
+    if not df_res.empty and not df_frame_res.empty:
+        df_res = pd.merge(
+            df_res,
+            df_frame_res[["SourceFile", "WindowCode", "FrameWidth", "FrameHeight"]],
+            on=["SourceFile", "WindowCode"],
+            how="left"
+        )
+    elif not df_res.empty:
+        df_res["FrameWidth"] = None
+        df_res["FrameHeight"] = None
 
     return df_res, df_frame_res
 
@@ -900,7 +929,6 @@ uploaded_files = st.file_uploader(
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-# Merge & Reset Buttons
 btn_col1, btn_col2, _ = st.columns([2, 2, 6])
 
 with btn_col1:
@@ -935,7 +963,6 @@ if "merged_df" in st.session_state:
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("<div class='step-title'>📋 Extracted Master Glass Records</div>", unsafe_allow_html=True)
 
-    # Search & Filter Controls
     f_col1, f_col2 = st.columns([2, 2])
     with f_col1:
         search_query = st.text_input("🔍 Quick Search (Window Code / Glass Spec)", placeholder="Type to filter...")
@@ -943,7 +970,6 @@ if "merged_df" in st.session_state:
         glass_types = ["ALL"] + sorted(list(df_merged["GlassType"].unique()))
         selected_glass = st.selectbox("Filter by Glass Spec", glass_types)
 
-    # Filter Application
     filtered_df = df_merged.copy()
     if search_query:
         filtered_df = filtered_df[
@@ -1089,7 +1115,6 @@ if "merged_df" in st.session_state:
         tot_qty = req_df["QTY"].sum()
         tot_area = req_df["TTL SQFT"].sum().round(2)
 
-        # KPI Summary Cards Row
         k1, k2, k3 = st.columns(3)
         with k1:
             st.markdown(f"<div class='kpi-card-box'><div class='kpi-title-lbl'>TOTAL ITEMS</div><div class='kpi-val-lbl'>{tot_items}</div></div>", unsafe_allow_html=True)
@@ -1100,7 +1125,6 @@ if "merged_df" in st.session_state:
     
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Tabs View (MEASUREMENTS Live Preview & Summaries + Window Details Tab)
         tab1, tab2, tab3, tab4 = st.tabs([
             "📄 MEASUREMENTS Live Preview", 
             "📊 OC Wise Summary", 
@@ -1179,9 +1203,6 @@ if "merged_df" in st.session_state:
 
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
 
-        # ============================================================
-        # TAB 4: WINDOW DETAILS (MEASUREMENT SHEET FRAME SIZE WxH)
-        # ============================================================
         with tab4:
             if "frame_df" in st.session_state and not st.session_state["frame_df"].empty:
                 df_frame = st.session_state["frame_df"].copy()
@@ -1208,9 +1229,8 @@ if "merged_df" in st.session_state:
                 win_summary.insert(0, "Sr. No.", range(1, len(win_summary) + 1))
                 st.dataframe(win_summary, use_container_width=True, hide_index=True)
             else:
-                st.info("ℹ️ MEASUREMENT / Client Details Sheet मधून Frame Size चा स्वतंत्र डेटा उपलब्ध नाही.")
+                st.info("ℹ️ Client Details Sheet मधून Frame Size चा डेटा उपलब्ध नाही.")
 
-        # Download Section Box
         st.markdown("<br>", unsafe_allow_html=True)
         st.success("✅ Requirement Excel Sheet Ready! Formatted with Calibri typography, blue header styling, borders, MEASUREMENTS sheet & OC breakdown.")
         
