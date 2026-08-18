@@ -261,7 +261,7 @@ with st.sidebar:
     st.markdown("### 📌 Navigation")
     
     # Safe Link to Frame Details Page
-    st.page_link("1_Frame_Details.py", label="Frame Size (WxH) & SQFT", icon="🖼️")
+    st.page_link("pages/1_Frame_Details.py" if os.path.exists("pages/1_Frame_Details.py") else "1_Frame_Details.py", label="Frame Size (WxH) & SQFT", icon="🖼️")
     
     st.markdown("---")
     st.markdown("<div class='quick-guide-title'>💡 Quick Guide</div>", unsafe_allow_html=True)
