@@ -142,6 +142,17 @@ st.markdown(
         margin-top: 4px;
     }
 
+    .engine-active-tag {
+        background-color: #2563eb;
+        color: white;
+        font-size: 11px;
+        font-weight: 700;
+        padding: 6px 14px;
+        border-radius: 20px;
+        letter-spacing: 0.5px;
+        text-transform: uppercase;
+    }
+
     /* Step Titles */
     .step-title {
         font-size: 16px;
@@ -283,7 +294,7 @@ st.markdown(
 )
 
 # ============================================================
-# Global Engine Constants & Parsing Logic
+# Global Engine Constants & Parsing Logic (GLASS SPECIFIC - UNTOUCHED)
 # ============================================================
 
 HEADER_SCAN_LIMIT = 200
@@ -303,16 +314,6 @@ KEYWORDS = {
     ],
     "QTY": ["QTY"],
     "GLASS": [["GLASS"], ["DESP"]],
-    "FRAME_WIDTH": [
-    ["F", "WIDTH"], ["F", "W"], 
-    ["FWIDTH"], ["FRAME", "WIDTH"], 
-    ["FRAME", "W"], ["OUTER", "W"]
-    ],
-    "FRAME_HEIGHT": [
-    ["F", "HEIGHT"], ["F", "H"], 
-    ["FHEIGHT"], ["FRAME", "HEIGHT"], 
-    ["FRAME", "H"], ["OUTER", "H"]
-    ],
 }
 
 
@@ -333,8 +334,6 @@ class HeaderInfo:
     height_col: Optional[int] = None
     qty_col: Optional[int] = None
     glass_col: Optional[int] = None
-    frame_w_col: Optional[int] = None
-    frame_h_col: Optional[int] = None
     columns: Dict[str, Optional[int]] = field(default_factory=dict)
 
 
@@ -354,8 +353,6 @@ class GlassRecord:
     GlassType: str
     SourceFile: str
     SheetName: str
-    FrameWidth: Optional[int] = None
-    FrameHeight: Optional[int] = None
 
 
 def normalize_header(text: Any) -> str:
@@ -414,79 +411,16 @@ def detect_column(header_row: List[str], keyword_groups: List[Any]) -> Optional[
     return None
 
 
-#def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
-#    normalized = normalize_header_row(header_row)
-#    columns = {
-#       "code": detect_column(normalized, KEYWORDS["CODE"]),
-#        "width": detect_column(normalized, KEYWORDS["WIDTH"]),
-#        "height": detect_column(normalized, KEYWORDS["HEIGHT"]),
-#        "qty": detect_column(normalized, KEYWORDS["QTY"]),
-#        "glass": detect_column(normalized, KEYWORDS["GLASS"]),
-#        "frame_width": detect_column(normalized, KEYWORDS["FRAME_WIDTH"]),
-#        "frame_height": detect_column(normalized, KEYWORDS["FRAME_HEIGHT"]),
-#    }
-
-#    if columns["width"] is None:
-#        for kw in [
-#            ["S", "GLS", "W"], ["S", "GL", "W"], ["GLS", "W"], ["GL", "W"],
-#            ["S", "GZ", "W"], ["GZ", "W"], ["FWIDTH"], ["F", "WIDTH"],
-#            ["SWIDTH"], ["S", "WIDTH"],
-#        ]:
-#            col = detect_column(normalized, kw)
-#            if col is not None:
-#                columns["width"] = col
-#                break
-
-#    if columns["height"] is None:
-#        for kw in [
-#            ["S", "GLS", "H"], ["S", "GL", "H"], ["GLS", "H"], ["GL", "H"],
-#            ["S", "GZ", "H"], ["GZ", "H"], ["FHEIGHT"], ["F", "HEIGHT"],
-#            ["SHEIGHT"], ["S", "HEIGHT"],
-#        ]:
-#            col = detect_column(normalized, kw)
-#            if col is not None:
-#                columns["height"] = col
-#                break
-
-#    return columns
-
-
 def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
     normalized = normalize_header_row(header_row)
-
-    # --- FRAME WIDTH & FRAME HEIGHT DETECTION (Strict Check) ---
-    f_w_col = None
-    f_h_col = None
-
-    for idx, text in enumerate(normalized):
-        t = re.sub(r"[^A-Z]", "", str(text).upper())
-        # Frame Width शोधणे
-        if t in ["FWIDTH", "FW", "FRAMEWIDTH", "FRAMEW", "FWIDTHMM"] or "FWIDTH" in t:
-            if f_w_col is None:
-                f_w_col = idx
-        # Frame Height शोधणे
-        elif t in ["FHEIGHT", "FH", "FRAMEHEIGHT", "FRAMEH", "FHEIGHTMM"] or "FHEIGHT" in t:
-            if f_h_col is None:
-                f_h_col = idx
-
-    # जर डायरेक्ट मॅचमध्ये नाही सापडले तर KEYWORDS वापरणे
-    if f_w_col is None:
-        f_w_col = detect_column(normalized, KEYWORDS.get("FRAME_WIDTH", []))
-    if f_h_col is None:
-        f_h_col = detect_column(normalized, KEYWORDS.get("FRAME_HEIGHT", []))
-
-    # --- BASE COLUMNS MAPPING ---
     columns = {
         "code": detect_column(normalized, KEYWORDS["CODE"]),
         "width": detect_column(normalized, KEYWORDS["WIDTH"]),
         "height": detect_column(normalized, KEYWORDS["HEIGHT"]),
         "qty": detect_column(normalized, KEYWORDS["QTY"]),
         "glass": detect_column(normalized, KEYWORDS["GLASS"]),
-        "frame_width": f_w_col,
-        "frame_height": f_h_col,
     }
 
-    # --- Glass Width Fallback Logic (तुमचा मूळ कोड - NO TOUCH) ---
     if columns["width"] is None:
         for kw in [
             ["S", "GLS", "W"], ["S", "GL", "W"], ["GLS", "W"], ["GL", "W"],
@@ -498,7 +432,6 @@ def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
                 columns["width"] = col
                 break
 
-    # --- Glass Height Fallback Logic (तुमचा मूळ कोड - NO TOUCH) ---
     if columns["height"] is None:
         for kw in [
             ["S", "GLS", "H"], ["S", "GL", "H"], ["GLS", "H"], ["GL", "H"],
@@ -551,8 +484,6 @@ def find_header_blocks(dataframe: pd.DataFrame) -> List[HeaderInfo]:
             height_col=columns["height"],
             qty_col=columns["qty"],
             glass_col=columns["glass"],
-            frame_w_col=columns["frame_width"],
-            frame_h_col=columns["frame_height"],
             columns=columns,
         )
         headers.append(header)
@@ -765,15 +696,10 @@ def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file:
         first_row = buffer.iloc[0]
         window = build_window_code(first_row, block.header)
 
-        # Glass Dimensions (तसेच ठेवले आहेत)
         width = collect_numeric_from_buffer(buffer, block.header.width_col)
         height = collect_numeric_from_buffer(buffer, block.header.height_col)
         qty = collect_numeric_from_buffer(buffer, block.header.qty_col)
         glass_raw = collect_glass(buffer, block.header)
-
-        # Frame Dimensions Capture करणे
-        frame_w = collect_numeric_from_buffer(buffer, block.header.frame_w_col) if block.header.frame_w_col is not None else width
-        frame_h = collect_numeric_from_buffer(buffer, block.header.frame_h_col) if block.header.frame_h_col is not None else height
 
         if not window or width is None or height is None:
             continue
@@ -794,8 +720,6 @@ def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file:
                 GlassType=glass,
                 SourceFile=source_file,
                 SheetName=sheet_name,
-                FrameWidth=frame_w,
-                FrameHeight=frame_h,
             )
         )
 
@@ -815,6 +739,7 @@ def parse_business_sheet(dataframe: pd.DataFrame, source_file: str, sheet_name: 
 
 def load_excel_with_calculated_values(file) -> Dict[str, pd.DataFrame]:
     file_bytes = io.BytesIO(file.read())
+    file.seek(0)  # Reset pointer
     wb = openpyxl.load_workbook(file_bytes, data_only=True)
     workbook_dict = {}
 
@@ -835,24 +760,129 @@ def load_excel_with_calculated_values(file) -> Dict[str, pd.DataFrame]:
     return workbook_dict
 
 
-def process_uploaded_files(uploaded_files) -> pd.DataFrame:
+# ============================================================
+# NEW DEDICATED FRAME READER LOGIC (CLIENT DETAILS / MEASUREMENT SHEET ONLY)
+# ============================================================
+def extract_measurement_sheet_frame_data(file_obj, file_name: str) -> pd.DataFrame:
+    try:
+        file_bytes = io.BytesIO(file_obj.read())
+        file_obj.seek(0)
+        xls = pd.ExcelFile(file_bytes)
+    except Exception:
+        return pd.DataFrame()
+
+    meas_sheet = None
+    for s in xls.sheet_names:
+        if "MEASUREMENT" in s.upper():
+            meas_sheet = s
+            break
+            
+    if not meas_sheet and len(xls.sheet_names) > 1:
+        meas_sheet = xls.sheet_names[1]
+
+    if not meas_sheet:
+        return pd.DataFrame()
+
+    try:
+        df = pd.read_excel(xls, sheet_name=meas_sheet, header=None)
+    except Exception:
+        return pd.DataFrame()
+
+    code_col = width_col = height_col = sqft_col = qty_col = None
+    header_idx = None
+
+    for r_idx in range(min(len(df), 50)):
+        row = df.iloc[r_idx]
+        row_str = " ".join([str(val).upper() for val in row.dropna()])
+        if "WINDOW" in row_str or "WIDTH" in row_str or "DIMENSION" in row_str or "CODE" in row_str:
+            c_code = c_w = c_h = c_sqft = c_qty = None
+            for c_idx, val in enumerate(row):
+                val_u = str(val).upper().strip()
+                val_clean = re.sub(r"[^A-Z0-9]", "", val_u)
+                if any(k in val_clean for k in ["CODE", "WINDOWCODE", "WINDOW"]):
+                    if c_code is None: c_code = c_idx
+                elif "WIDTH" in val_clean or "FWIDTH" in val_clean or "FW" in val_clean:
+                    if c_w is None: c_w = c_idx
+                elif "HEIGHT" in val_clean or "FHEIGHT" in val_clean or "FH" in val_clean:
+                    if c_h is None: c_h = c_idx
+                elif "SQFT" in val_clean or "AREA" in val_clean or "SQ" in val_clean:
+                    if c_sqft is None: c_sqft = c_idx
+                elif "QTY" in val_clean or "QUANTITY" in val_clean or "NOS" in val_clean:
+                    if c_qty is None: c_qty = c_idx
+
+            if c_code is not None and (c_w is not None or c_h is not None):
+                header_idx = r_idx
+                code_col, width_col, height_col, sqft_col, qty_col = c_code, c_w, c_h, c_sqft, c_qty
+                break
+
+    if header_idx is None:
+        return pd.DataFrame()
+
+    records = []
+    for idx in range(header_idx + 1, len(df)):
+        row = df.iloc[idx]
+        if code_col >= len(row) or pd.isna(row.iloc[code_col]):
+            continue
+        code_val = str(row.iloc[code_col]).strip()
+        if not code_val or code_val.lower() in ["nan", "none", "total", "code", "sr.no.", "s.no", "description"]:
+            continue
+
+        try:
+            f_width = safe_numeric(row.iloc[width_col]) if width_col is not None and width_col < len(row) else None
+            f_height = safe_numeric(row.iloc[height_col]) if height_col is not None and height_col < len(row) else None
+            qty = safe_numeric(row.iloc[qty_col]) if qty_col is not None and qty_col < len(row) else 1
+            if qty is None or qty <= 0:
+                qty = 1
+
+            if sqft_col is not None and sqft_col < len(row) and pd.notna(row.iloc[sqft_col]):
+                try:
+                    frame_sqft = float(re.sub(r"[^\d.]", "", str(row.iloc[sqft_col])))
+                except:
+                    frame_sqft = round((f_width * f_height) / 92903.04, 4) if (f_width and f_height) else 0.0
+            else:
+                frame_sqft = round((f_width * f_height) / 92903.04, 4) if (f_width and f_height) else 0.0
+
+            if f_width and f_height:
+                records.append({
+                    "SourceFile": file_name,
+                    "WindowCode": code_val,
+                    "FrameWidth": f_width,
+                    "FrameHeight": f_height,
+                    "Frame W x H (mm)": f"{f_width} x {f_height}",
+                    "Frame SQFT": frame_sqft,
+                    "Qty": qty
+                })
+        except Exception:
+            continue
+
+    return pd.DataFrame(records)
+
+
+def process_uploaded_files(uploaded_files) -> Tuple[pd.DataFrame, pd.DataFrame]:
     all_records = []
+    all_frame_records = []
 
     for file in uploaded_files:
         try:
+            # 1. Glass Records Extraction
             workbook_dict = load_excel_with_calculated_values(file)
             business_sheets = find_business_sheets(workbook_dict)
             for sheet_name, df in business_sheets:
                 records = parse_business_sheet(df, file.name, sheet_name)
                 all_records.extend(records)
+
+            # 2. Measurement Frame Data Extraction
+            df_frame = extract_measurement_sheet_frame_data(file, file.name)
+            if not df_frame.empty:
+                all_frame_records.append(df_frame)
+
         except Exception as e:
             st.error(f"Error processing file {file.name}: {e}")
 
-    if not all_records:
-        return pd.DataFrame()
+    df_res = pd.DataFrame([asdict(r) for r in all_records]).reset_index(drop=True) if all_records else pd.DataFrame()
+    df_frame_res = pd.concat(all_frame_records, ignore_index=True) if all_frame_records else pd.DataFrame()
 
-    df_res = pd.DataFrame([asdict(r) for r in all_records]).reset_index(drop=True)
-    return df_res
+    return df_res, df_frame_res
 
 
 # ============================================================
@@ -877,9 +907,10 @@ with btn_col1:
     if st.button("🔗 Merge & Process Files", type="primary", use_container_width=True):
         if uploaded_files:
             with st.spinner("Extracting & Merging Records..."):
-                df_merged = process_uploaded_files(uploaded_files)
+                df_merged, df_frame_merged = process_uploaded_files(uploaded_files)
                 if not df_merged.empty:
                     st.session_state["merged_df"] = df_merged
+                    st.session_state["frame_df"] = df_frame_merged
                     st.toast(f"Successfully Extracted {len(df_merged)} Glass Records!", icon="✅")
                 else:
                     st.error("⚠️ No valid glass records found.")
@@ -888,7 +919,7 @@ with btn_col1:
 
 with btn_col2:
     if st.button("🗑️ Reset Data", type="secondary", use_container_width=True):
-        for key in ["merged_df", "req_df_preview", "req_bytes", "req_generated"]:
+        for key in ["merged_df", "frame_df", "req_df_preview", "req_bytes", "req_generated"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.session_state["uploader_key"] += 1
@@ -1069,7 +1100,7 @@ if "merged_df" in st.session_state:
     
         st.markdown("<br>", unsafe_allow_html=True)
 
-        # Tabs View (MEASUREMENTS Live Preview & Summaries)
+        # Tabs View (MEASUREMENTS Live Preview & Summaries + Window Details Tab)
         tab1, tab2, tab3, tab4 = st.tabs([
             "📄 MEASUREMENTS Live Preview", 
             "📊 OC Wise Summary", 
@@ -1149,52 +1180,35 @@ if "merged_df" in st.session_state:
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
 
         # ============================================================
-        # TAB 4: WINDOW DETAILS (FRAME SIZE W X H)
-        # ============================================================
-        # ============================================================
-        # TAB 4: WINDOW DETAILS (MEASUREMENT SHEET FRAME SIZE W x H)
+        # TAB 4: WINDOW DETAILS (MEASUREMENT SHEET FRAME SIZE WxH)
         # ============================================================
         with tab4:
-            df_win = df_merged.copy()
-            
-            # Frame Size साठी Measurement Sheet मधील Frame Dimensions वापरणे
-            # जर नसेल तर Fallback म्हणून Glass Size वापरली जाईल
-            if "FrameWidth" not in df_win.columns or df_win["FrameWidth"].isnull().all():
-                df_win["FrameWidth"] = df_win["Width"]
-            if "FrameHeight" not in df_win.columns or df_win["FrameHeight"].isnull().all():
-                df_win["FrameHeight"] = df_win["Height"]
+            if "frame_df" in st.session_state and not st.session_state["frame_df"].empty:
+                df_frame = st.session_state["frame_df"].copy()
+                
+                df_frame["Total Frame SQFT"] = (df_frame["Frame SQFT"] * df_frame["Qty"]).round(2)
+                
+                win_summary = df_frame.groupby(
+                    ["SourceFile", "WindowCode", "Frame W x H (mm)"], as_index=False
+                ).agg(
+                    Qty=("Qty", "sum"),
+                    Per_Window_SQFT=("Frame SQFT", "first"),
+                    Total_Frame_SQFT=("Total Frame SQFT", "sum")
+                )
 
-            df_win["FrameWidth"] = df_win["FrameWidth"].fillna(df_win["Width"])
-            df_win["FrameHeight"] = df_win["FrameHeight"].fillna(df_win["Height"])
-
-            # Measurement Sheet Frame W x H (mm)
-            df_win["Frame W x H (mm)"] = (
-                df_win["FrameWidth"].astype(int).astype(str) + " x " + df_win["FrameHeight"].astype(int).astype(str)
-            )
-            
-            # Frame SQFT Calculation
-            df_win["Frame SQFT"] = ((df_win["FrameWidth"] * df_win["FrameHeight"]) / 92903.04).round(4)
-            df_win["Total Frame SQFT"] = (df_win["Frame SQFT"] * df_win["Qty"]).round(2)
-
-            # Measurement Sheet Frame Details Grouping
-            win_summary = df_win.groupby(
-                ["SourceFile", "WindowCode", "Frame W x H (mm)"], as_index=False
-            ).agg(
-                Total_Qty=("Qty", "sum"),
-                Total_Frame_SQFT=("Total Frame SQFT", "sum")
-            )
-
-            win_summary.columns = [
-                "OC Name (Source File)", 
-                "Window Code", 
-                "Frame W x H (mm)", 
-                "Qty", 
-                "Total Frame SQFT"
-            ]
-            
-            win_summary.insert(0, "Sr. No.", range(1, len(win_summary) + 1))
-
-            st.dataframe(win_summary, use_container_width=True, hide_index=True)
+                win_summary.columns = [
+                    "OC Name (Source File)", 
+                    "Window Code", 
+                    "Frame W x H (mm)", 
+                    "Qty", 
+                    "Per Window SQFT",
+                    "Total Frame SQFT"
+                ]
+                
+                win_summary.insert(0, "Sr. No.", range(1, len(win_summary) + 1))
+                st.dataframe(win_summary, use_container_width=True, hide_index=True)
+            else:
+                st.info("ℹ️ MEASUREMENT / Client Details Sheet मधून Frame Size चा स्वतंत्र डेटा उपलब्ध नाही.")
 
         # Download Section Box
         st.markdown("<br>", unsafe_allow_html=True)
