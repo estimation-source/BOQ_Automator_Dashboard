@@ -304,12 +304,14 @@ KEYWORDS = {
     "QTY": ["QTY"],
     "GLASS": [["GLASS"], ["DESP"]],
     "FRAME_WIDTH": [
-        ["FRAME", "W"], ["FRAME", "WIDTH"], ["FWIDTH"], ["F", "W"], 
-        ["OUTER", "W"], ["OUTER", "WIDTH"], ["F", "WIDTH"]
+    ["F", "WIDTH"], ["F", "W"], 
+    ["FWIDTH"], ["FRAME", "WIDTH"], 
+    ["FRAME", "W"], ["OUTER", "W"]
     ],
     "FRAME_HEIGHT": [
-        ["FRAME", "H"], ["FRAME", "HEIGHT"], ["FHEIGHT"], ["F", "H"], 
-        ["OUTER", "H"], ["OUTER", "HEIGHT"], ["F", "HEIGHT"]
+    ["F", "HEIGHT"], ["F", "H"], 
+    ["FHEIGHT"], ["FRAME", "HEIGHT"], 
+    ["FRAME", "H"], ["OUTER", "H"]
     ],
 }
 
