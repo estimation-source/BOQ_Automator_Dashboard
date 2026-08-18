@@ -26,7 +26,7 @@ st.set_page_config(
 )
 
 # ============================================================
-# 2. FIX CSS: Header चालू ठेवून Sidebar Toggle Button Visible ठेवणे
+# 2. CSS Adjustment for Sidebar and Navigation
 # ============================================================
 st.markdown("""
     <style>
@@ -63,6 +63,10 @@ st.markdown("""
     footer {
         display: none !important;
         visibility: hidden !important;
+    }
+    
+    .stPageLink {
+        font-weight: 600 !important;
     }
     </style>
 """, unsafe_allow_html=True)
@@ -239,6 +243,12 @@ with st.sidebar:
             st.image(Image.open(logo_file), width=110)
     else:
         st.markdown("<h2 style='text-align: center; color:#1e293b;'><b>win square</b></h2>", unsafe_allow_html=True)
+    
+    st.markdown("---")
+    st.markdown("### 📌 Navigation")
+    
+    # Safe Link to Frame Details Page
+    st.page_link("pages/1_Frame_Details.py", label="Frame Size (WxH) & SQFT", icon="🖼️")
     
     st.markdown("---")
     st.markdown("<div class='quick-guide-title'>💡 Quick Guide</div>", unsafe_allow_html=True)
@@ -984,7 +994,6 @@ if "merged_df" in st.session_state:
             st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
 
         with tab2:
-            # OC WISE SUMMARY (Only Non-Frosted Glass Total SQFT and Specs)
             df_merged_copy = df_merged.copy()
             df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
 
