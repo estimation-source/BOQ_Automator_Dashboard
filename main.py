@@ -1151,10 +1151,14 @@ if "merged_df" in st.session_state:
         # ============================================================
         # TAB 4: WINDOW DETAILS (FRAME SIZE W X H)
         # ============================================================
+        # ============================================================
+        # TAB 4: WINDOW DETAILS (MEASUREMENT SHEET FRAME SIZE W x H)
+        # ============================================================
         with tab4:
             df_win = df_merged.copy()
             
-            # Frame dimensions नसेल तर Glass Dimensions चा बॅकअप
+            # Frame Size साठी Measurement Sheet मधील Frame Dimensions वापरणे
+            # जर नसेल तर Fallback म्हणून Glass Size वापरली जाईल
             if "FrameWidth" not in df_win.columns or df_win["FrameWidth"].isnull().all():
                 df_win["FrameWidth"] = df_win["Width"]
             if "FrameHeight" not in df_win.columns or df_win["FrameHeight"].isnull().all():
@@ -1163,14 +1167,16 @@ if "merged_df" in st.session_state:
             df_win["FrameWidth"] = df_win["FrameWidth"].fillna(df_win["Width"])
             df_win["FrameHeight"] = df_win["FrameHeight"].fillna(df_win["Height"])
 
-            # Frame W x H Format (mm)
-            df_win["Frame W x H (mm)"] = df_win["FrameWidth"].astype(int).astype(str) + " x " + df_win["FrameHeight"].astype(int).astype(str)
+            # Measurement Sheet Frame W x H (mm)
+            df_win["Frame W x H (mm)"] = (
+                df_win["FrameWidth"].astype(int).astype(str) + " x " + df_win["FrameHeight"].astype(int).astype(str)
+            )
             
             # Frame SQFT Calculation
             df_win["Frame SQFT"] = ((df_win["FrameWidth"] * df_win["FrameHeight"]) / 92903.04).round(4)
             df_win["Total Frame SQFT"] = (df_win["Frame SQFT"] * df_win["Qty"]).round(2)
 
-            # Summarize Grouping by OC Name and Window Code
+            # Measurement Sheet Frame Details Grouping
             win_summary = df_win.groupby(
                 ["SourceFile", "WindowCode", "Frame W x H (mm)"], as_index=False
             ).agg(
@@ -1178,7 +1184,14 @@ if "merged_df" in st.session_state:
                 Total_Frame_SQFT=("Total Frame SQFT", "sum")
             )
 
-            win_summary.columns = ["OC Name (Source File)", "Window Code", "Frame W x H (mm)", "Qty", "Total Frame SQFT"]
+            win_summary.columns = [
+                "OC Name (Source File)", 
+                "Window Code", 
+                "Frame W x H (mm)", 
+                "Qty", 
+                "Total Frame SQFT"
+            ]
+            
             win_summary.insert(0, "Sr. No.", range(1, len(win_summary) + 1))
 
             st.dataframe(win_summary, use_container_width=True, hide_index=True)
