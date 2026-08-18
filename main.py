@@ -17,18 +17,6 @@ from PIL import Image
 import streamlit as st
 
 
-# 1. Pages Define करा (KeyError टाळण्यासाठी)
-main_page = st.Page("main.py", title="Requirement Sheet Engine", icon="🪟", default=True)
-frame_page = st.Page("pages/1_Frame_Details.py", title="Frame Size (WxH) & SQFT", icon="🖼️")
-
-# 2. Navigation Setup
-pg = st.navigation({
-    "Main Menu": [main_page],
-    "Tools": [frame_page]
-})
-
-# 3. App Run करा
-pg.run()
 # ============================================================
 # 1. Streamlit Page Config
 # ============================================================
