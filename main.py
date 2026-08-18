@@ -683,7 +683,7 @@ def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file:
         if qty is None:
             qty = 1
 
-        # 🎯 **मुख्य अट: FROSTED GLASS पूर्णपणे इग्नोर करणे**
+        # 🎯 **FROSTED GLASS ignore करणे**
         if glass_raw and "FROSTED" in str(glass_raw).upper():
             continue
 
@@ -739,107 +739,19 @@ def load_excel_with_calculated_values(file) -> Dict[str, pd.DataFrame]:
 
 
 # ============================================================
-# FRAME DATA EXTRACTION: ONLY READ "CLIENT DETAILS" / QUOTE / SPEC SHEETS
+# PROCESS FILES
 # ============================================================
-def extract_measurement_sheet_frame_data(file_obj, file_name: str) -> pd.DataFrame:
-    try:
-        file_bytes = io.BytesIO(file_obj.read())
-        file_obj.seek(0)
-        xls = pd.ExcelFile(file_bytes)
-    except Exception:
-        return pd.DataFrame()
-
-    records = []
-
-    for s_name in xls.sheet_names:
-        clean_sheet_name = str(s_name).strip().upper()
-        
-        if not any(k in clean_sheet_name for k in ["CLIENT", "DETAIL", "QUOTE", "SPEC"]):
-            continue
-
-        try:
-            df = pd.read_excel(xls, sheet_name=s_name, header=None)
-        except Exception:
-            continue
-
-        current_code = None
-        current_w = None
-        current_h = None
-
-        for r_idx in range(len(df)):
-            row = df.iloc[r_idx]
-            row_str_list = [str(val).strip() for val in row.dropna()]
-            row_text = " ".join(row_str_list).upper()
-
-            for c_idx, val in enumerate(row):
-                val_u = str(val).upper().strip()
-                if val_u in ["CODE:", "CODE"]:
-                    if c_idx + 1 < len(row) and pd.notna(row.iloc[c_idx + 1]):
-                        c_val = str(row.iloc[c_idx + 1]).strip()
-                        if c_val and c_val.lower() != "nan" and c_val.upper() not in ["NAME", "DESCRIPTION", "QTY"]:
-                            current_code = c_val
-
-            if "WIDTH" in row_text and current_code:
-                if not any(w in row_text for w in ["GLASS", "GLS", "PANEL", "SHUTTER"]):
-                    for c_idx, val in enumerate(row):
-                        if str(val).upper().strip() in ["WIDTH", "WIDTH:", "FRAME WIDTH"]:
-                            for offset in [1, 2, 3]:
-                                if c_idx + offset < len(row):
-                                    num_val = safe_numeric(row.iloc[c_idx + offset])
-                                    if num_val:
-                                        current_w = num_val
-                                        break
-
-            if "HEIGHT" in row_text and current_code:
-                if not any(w in row_text for w in ["GLASS", "GLS", "PANEL", "SHUTTER"]):
-                    for c_idx, val in enumerate(row):
-                        if str(val).upper().strip() in ["HEIGHT", "HEIGHT:", "FRAME HEIGHT"]:
-                            for offset in [1, 2, 3]:
-                                if c_idx + offset < len(row):
-                                    num_val = safe_numeric(row.iloc[c_idx + offset])
-                                    if num_val:
-                                        current_h = num_val
-                                        break
-
-            if current_code and current_w and current_h:
-                frame_sqft = round((current_w * current_h) / 92903.04, 4)
-                
-                records.append({
-                    "SourceFile": file_name,
-                    "SheetName": s_name,
-                    "WindowCode": current_code,
-                    "FrameWidth": current_w,
-                    "FrameHeight": current_h,
-                    "Frame W x H (mm)": f"{current_w} x {current_h}",
-                    "Frame SQFT": frame_sqft,
-                    "Qty": 1
-                })
-                current_code = None
-                current_w = None
-                current_h = None
-
-    df_out = pd.DataFrame(records)
-    if not df_out.empty:
-        df_out = df_out.drop_duplicates(subset=["SourceFile", "WindowCode", "FrameWidth", "FrameHeight"])
-    return df_out
-
-
-# ============================================================
-# PROCESS FILES WITH STRICT SHEET FILTERING
-# ============================================================
-def process_uploaded_files(uploaded_files) -> Tuple[pd.DataFrame, pd.DataFrame]:
+def process_uploaded_files(uploaded_files) -> pd.DataFrame:
     all_records = []
-    all_frame_records = []
 
     for file in uploaded_files:
         try:
-            # 1. Glass Records (Measurement Sheets मधून फक्त Frosted सोडून बाकी सर्व Glass WxH व Qty वाचणे)
             workbook_dict = load_excel_with_calculated_values(file)
             filtered_workbook = {}
             for s_name, df in workbook_dict.items():
                 s_name_upper = s_name.upper().strip()
                 if any(k in s_name_upper for k in ["CLIENT", "DETAIL", "QUOTE"]):
-                    continue  # Glass WxH साठी Client Details Sheets सोडणे
+                    continue
                 filtered_workbook[s_name] = df
 
             business_sheets = find_business_sheets(filtered_workbook)
@@ -847,43 +759,10 @@ def process_uploaded_files(uploaded_files) -> Tuple[pd.DataFrame, pd.DataFrame]:
                 records = parse_business_sheet(df, file.name, sheet_name)
                 all_records.extend(records)
 
-            # 2. Frame WxH Records
-            df_frame = extract_measurement_sheet_frame_data(file, file.name)
-            if not df_frame.empty:
-                all_frame_records.append(df_frame)
-
         except Exception as e:
             st.error(f"Error processing file {file.name}: {e}")
 
-    df_res = pd.DataFrame([asdict(r) for r in all_records]).reset_index(drop=True) if all_records else pd.DataFrame()
-    df_frame_res = pd.concat(all_frame_records, ignore_index=True) if all_frame_records else pd.DataFrame()
-
-    # Frame Data जोडणे
-    if not df_res.empty and not df_frame_res.empty:
-        df_res["FrameWidth"] = None
-        df_res["FrameHeight"] = None
-
-        for idx, row in df_res.iterrows():
-            w_code = str(row["WindowCode"]).strip()
-            src = row["SourceFile"]
-            
-            matched_frame = df_frame_res[
-                (df_frame_res["SourceFile"] == src) & 
-                (
-                    (df_frame_res["WindowCode"] == w_code) | 
-                    (df_frame_res["WindowCode"].apply(lambda x: w_code.endswith(str(x)) or str(x).endswith(w_code)))
-                )
-            ]
-            
-            if not matched_frame.empty:
-                df_res.at[idx, "FrameWidth"] = matched_frame.iloc[0]["FrameWidth"]
-                df_res.at[idx, "FrameHeight"] = matched_frame.iloc[0]["FrameHeight"]
-
-    elif not df_res.empty:
-        df_res["FrameWidth"] = None
-        df_res["FrameHeight"] = None
-
-    return df_res, df_frame_res
+    return pd.DataFrame([asdict(r) for r in all_records]).reset_index(drop=True) if all_records else pd.DataFrame()
 
 
 # ============================================================
@@ -907,10 +786,9 @@ with btn_col1:
     if st.button("🔗 Merge & Process Files", type="primary", use_container_width=True):
         if uploaded_files:
             with st.spinner("Extracting & Merging Records..."):
-                df_merged, df_frame_merged = process_uploaded_files(uploaded_files)
+                df_merged = process_uploaded_files(uploaded_files)
                 if not df_merged.empty:
                     st.session_state["merged_df"] = df_merged
-                    st.session_state["frame_df"] = df_frame_merged
                     st.toast(f"Successfully Extracted {len(df_merged)} Non-Frosted Glass Records!", icon="✅")
                 else:
                     st.error("⚠️ No valid non-frosted glass records found.")
@@ -919,7 +797,7 @@ with btn_col1:
 
 with btn_col2:
     if st.button("🗑️ Reset Data", type="secondary", use_container_width=True):
-        for key in ["merged_df", "frame_df", "req_df_preview", "req_bytes", "req_generated"]:
+        for key in ["merged_df", "req_df_preview", "req_bytes", "req_generated"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.session_state["uploader_key"] += 1
@@ -1096,11 +974,10 @@ if "merged_df" in st.session_state:
     
         st.markdown("<br>", unsafe_allow_html=True)
 
-        tab1, tab2, tab3, tab4 = st.tabs([
+        tab1, tab2, tab3 = st.tabs([
             "📄 MEASUREMENTS Live Preview", 
             "📊 OC Wise Summary (Glass SQFT)", 
-            "🧩 Glass Type Breakdown",
-            "🪟 Window Details (Frame Size WxH)"
+            "🧩 Glass Type Breakdown"
         ])
 
         with tab1:
@@ -1174,34 +1051,6 @@ if "merged_df" in st.session_state:
             glass_breakdown.insert(0, "Sr. No.", range(1, len(glass_breakdown) + 1))
 
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
-
-        with tab4:
-            if "frame_df" in st.session_state and not st.session_state["frame_df"].empty:
-                df_frame = st.session_state["frame_df"].copy()
-                
-                df_frame["Total Frame SQFT"] = (df_frame["Frame SQFT"] * df_frame["Qty"]).round(2)
-                
-                win_summary = df_frame.groupby(
-                    ["SourceFile", "WindowCode", "Frame W x H (mm)"], as_index=False
-                ).agg(
-                    Qty=("Qty", "sum"),
-                    Per_Window_SQFT=("Frame SQFT", "first"),
-                    Total_Frame_SQFT=("Total Frame SQFT", "sum")
-                )
-
-                win_summary.columns = [
-                    "OC Name (Source File)", 
-                    "Window Code", 
-                    "Frame W x H (mm)", 
-                    "Qty", 
-                    "Per Window SQFT",
-                    "Total Frame SQFT"
-                ]
-                
-                win_summary.insert(0, "Sr. No.", range(1, len(win_summary) + 1))
-                st.dataframe(win_summary, use_container_width=True, hide_index=True)
-            else:
-                st.info("ℹ️ Client Details Sheet मधून Frame Size चा डेटा उपलब्ध नाही.")
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.success("✅ Requirement Excel Sheet Ready! Formatted with Calibri typography, blue header styling, borders, MEASUREMENTS sheet & OC breakdown.")
