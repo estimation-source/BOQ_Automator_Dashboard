@@ -811,6 +811,7 @@ if "merged_df" in st.session_state:
             df_sorted = df_merged.sort_values(by="GlassType").reset_index(drop=True)
 
             df_req_preview = df_sorted.copy()
+            # Live Preview साठी SQFT Rounding करून त्यावरूनच TTL SQFT काढणे (Exact Excel Formula Matching)
             df_req_preview["SQFT"] = ((df_req_preview["Width"] * df_req_preview["Height"]) / 92903.04).round(2)
             df_req_preview["TTL SQFT"] = (df_req_preview["SQFT"] * df_req_preview["Qty"]).round(2)
 
@@ -993,7 +994,9 @@ if "merged_df" in st.session_state:
 
         with tab2:
             df_merged_copy = df_merged.copy()
-            df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
+            # OC Wise Summary मध्ये सुद्धा Exact Excel SQFT Formula (SQFT * QTY) मॅच करणे
+            df_merged_copy["SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04).round(2)
+            df_merged_copy["Total_SQFT"] = (df_merged_copy["SQFT"] * df_merged_copy["Qty"]).round(2)
 
             def clean_glass_name(text):
                 text = str(text).upper().strip()
