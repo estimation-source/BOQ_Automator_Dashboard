@@ -25,54 +25,12 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ============================================================
-# 2. FIX CSS: Header चालू ठेवून Sidebar Toggle Button Visible ठेवणे
-# ============================================================
-st.markdown("""
-    <style>
-    header[data-testid="stHeader"] {
-        z-index: 99999 !important;
-        background: transparent !important;
-    }
-
-    button[data-testid="stSidebarCollapsedControl"],
-    button[data-testid="stSidebarNavCollapseButton"] {
-        display: flex !important;
-        visibility: visible !important;
-        opacity: 1 !important;
-        background-color: #FF4B4B !important;
-        color: white !important;
-        border-radius: 8px !important;
-        position: fixed !important;
-        top: 12px !important;
-        left: 12px !important;
-        z-index: 999999 !important;
-        box-shadow: 0px 3px 8px rgba(0,0,0,0.3) !important;
-    }
-
-    button[data-testid="stSidebarCollapsedControl"] svg,
-    button[data-testid="stSidebarNavCollapseButton"] svg {
-        fill: white !important;
-        color: white !important;
-        width: 22px !important;
-        height: 22px !important;
-    }
-
-    [data-testid="stStatusWidget"],
-    #MainMenu, 
-    footer {
-        display: none !important;
-        visibility: hidden !important;
-    }
-    </style>
-""", unsafe_allow_html=True)
-
 # State Management
 if "uploader_key" not in st.session_state:
     st.session_state["uploader_key"] = 0
 
 # ============================================================
-# 3. UI Layout & Fonts CSS
+# 2. UI Layout & Custom CSS
 # ============================================================
 st.markdown(
     """
@@ -215,6 +173,10 @@ st.markdown(
     .stTabs [aria-selected="true"] {
         color: #2563eb !important;
         border-bottom: 2px solid #2563eb !important;
+    }
+    
+    #MainMenu, footer {
+        visibility: hidden;
     }
     </style>
     """,
@@ -683,7 +645,6 @@ def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file:
         if qty is None:
             qty = 1
 
-        # 🎯 **FROSTED GLASS ignore करणे**
         if glass_raw and "FROSTED" in str(glass_raw).upper():
             continue
 
@@ -984,7 +945,6 @@ if "merged_df" in st.session_state:
             st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
 
         with tab2:
-            # 📊 OC WISE SUMMARY (Only Non-Frosted Glass Total SQFT and Specs)
             df_merged_copy = df_merged.copy()
             df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
 
@@ -1061,6 +1021,3 @@ if "merged_df" in st.session_state:
             file_name="REQUIREMENT_SHEET_MEASUREMENTS.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         )
-        # main.py च्या शेवटी हे जोडा जेणेकरून Streamlit फक्त main.py डायरेक्ट रन केल्यावरच चालेल
-if __name__ == "__main__":
-    pass  # तुमचा मूळ UI रन होईल
