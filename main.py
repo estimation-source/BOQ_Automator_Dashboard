@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import datetime
 import io
 import math
 import os
@@ -210,8 +211,8 @@ with st.sidebar:
         <div class='quick-guide-step'><b>2.</b> Click on <b>Merge & Process Files</b>.</div>
         <div class='quick-guide-step'><b>3.</b> Review merged glass records.</div>
         <div class='quick-guide-step'><b>4.</b> Click <b>Generate Requirement Sheet (MEASUREMENTS)</b>.</div>
-        <div class='quick-guide-step'><b>5.</b> Download styled Excel with auto formulas & OC breakdown.</div>
-        <div class='quick-guide-step'><b>6.</b> Use <b>Reset Data</b> to clear current workspace.</div>
+        <div class='quick-guide-step'><b>5.</b> Download styled Excel with glass-wise color grouping & formulas.</div>
+        <div class='quick-guide-step'><b>6.</b> Use <b>Reset Data</b> to clear workspace.</div>
         """,
         unsafe_allow_html=True
     )
@@ -804,10 +805,14 @@ if "merged_df" in st.session_state:
     st.markdown("<div class='step-title'>⚡ Step 2: Generate Official Requirement Sheet</div>", unsafe_allow_html=True)
 
     if st.button("⚡ GENERATE REQUIREMENT SHEET (MEASUREMENTS)", type="primary"):
-        with st.spinner("Calculating SQFT and generating Excel sheet..."):
-            df_req_preview = df_merged.copy()
-            df_req_preview["SQFT"] = ((df_req_preview["Width"] * df_req_preview["Height"]) / 92903.04).round(6)
-            df_req_preview["TTL SQFT"] = (df_req_preview["SQFT"] * df_req_preview["Qty"]).round(6)
+        with st.spinner("Calculating SQFT and generating Excel sheet with Glass Color Grouping..."):
+            
+            # Glass Specification नुसार Sort करून एकत्र आणणे
+            df_sorted = df_merged.sort_values(by="GlassType").reset_index(drop=True)
+
+            df_req_preview = df_sorted.copy()
+            df_req_preview["SQFT"] = ((df_req_preview["Width"] * df_req_preview["Height"]) / 92903.04).round(2)
+            df_req_preview["TTL SQFT"] = (df_req_preview["SQFT"] * df_req_preview["Qty"]).round(2)
 
             df_req_preview.insert(0, "Sr.No", range(1, len(df_req_preview) + 1))
             df_req_preview = df_req_preview.rename(
@@ -824,33 +829,56 @@ if "merged_df" in st.session_state:
             df_req_preview = df_req_preview[preview_cols]
             st.session_state["req_df_preview"] = df_req_preview
 
-            # OpenPyXL Sheet Processing
+            # ============================================================
+            # OpenPyXL Sheet Processing With Glass Spec Color Grouping
+            # ============================================================
             wb = openpyxl.Workbook()
             ws = wb.active
             ws.title = "MEASUREMENTS"
             ws.views.sheetView[0].showGridLines = True
 
-            title_font = Font(name="Calibri", size=12, bold=True)
+            # 1. Fonts & Alignments
+            title_font = Font(name="Calibri", size=14, bold=True, color="000000")
             header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
-            data_font = Font(name="Calibri", size=10)
+            data_font = Font(name="Calibri", size=10, bold=True)
             total_font = Font(name="Calibri", size=11, bold=True)
 
-            header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
-            total_fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+            # 2. Base Fills
+            title_fill = PatternFill(start_color="D9E1F2", end_color="D9E1F2", fill_type="solid")  # Light Blue Title
+            header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")  # Dark Blue Header
 
+            # 3. Dynamic Pastel Palette for Glass Types
+            COLOR_PALETTE = [
+                "DDEBF7",  # Light Blue
+                "FFF2CC",  # Light Yellow / Orange
+                "E2EFDA",  # Light Green
+                "FCE4D6",  # Soft Peach
+                "E8D8F0",  # Light Purple
+                "F2F2F2",  # Light Gray
+                "E0F7FA",  # Cyan Tint
+                "FFFDE7",  # Soft Yellow
+            ]
+
+            glass_color_map = {}
+            color_index = 0
+
+            # 4. Borders
             thin_border = Border(
-                left=Side(style="thin", color="D9D9D9"),
-                right=Side(style="thin", color="D9D9D9"),
-                top=Side(style="thin", color="D9D9D9"),
-                bottom=Side(style="thin", color="D9D9D9"),
-            )
-            thick_top_double_bottom = Border(
+                left=Side(style="thin", color="000000"),
+                right=Side(style="thin", color="000000"),
                 top=Side(style="thin", color="000000"),
-                bottom=Side(style="double", color="000000"),
+                bottom=Side(style="thin", color="000000"),
             )
 
-            ws.cell(row=1, column=1, value="1 WIN-SQUARE").font = title_font
+            # --- Title Header (Row 1) ---
+            current_month_year = datetime.datetime.now().strftime("%b %Y").upper()
+            ws.merge_cells("A1:H1")
+            title_cell = ws.cell(row=1, column=1, value=f'1 WIN-SQUARE " " {current_month_year}')
+            title_cell.font = title_font
+            title_cell.alignment = Alignment(horizontal="center", vertical="center")
+            title_cell.fill = title_fill
 
+            # --- Table Headers (Row 2) ---
             headers = ["Sr.No", "WINDOW CODE", "WIDTH", "HEIGHT", "SQFT", "QTY", "TTL SQFT", "REMARKS"]
             ws.append(headers)
 
@@ -858,58 +886,77 @@ if "merged_df" in st.session_state:
                 cell = ws.cell(row=2, column=c)
                 cell.font = header_font
                 cell.fill = header_fill
-                cell.alignment = Alignment(horizontal="center" if c in [1, 6] else ("right" if c in [3, 4, 5, 7] else "left"))
+                cell.alignment = Alignment(horizontal="center", vertical="center", wrap_text=True)
+                cell.border = thin_border
 
-            for idx, row in df_merged.iterrows():
+            # --- Data Rows (Grouped & Color Coded) ---
+            for idx, row in df_sorted.iterrows():
                 r_idx = idx + 3
-                sqft_formula = f"=ROUND((C{r_idx}*D{r_idx})/92903.04, 6)"
+                sqft_formula = f"=ROUND((C{r_idx}*D{r_idx})/92903.04, 2)"
                 ttl_sqft_formula = f"=E{r_idx}*F{r_idx}"
 
+                glass_spec = str(row["GlassType"]).strip()
+
+                # Dynamic Color Assignment per Glass Specification
+                if glass_spec not in glass_color_map:
+                    glass_color_map[glass_spec] = COLOR_PALETTE[color_index % len(COLOR_PALETTE)]
+                    color_index += 1
+
+                current_bg_color = glass_color_map[glass_spec]
+                row_fill = PatternFill(start_color=current_bg_color, end_color=current_bg_color, fill_type="solid")
+
                 ws.append([
-                    idx + 1, row["WindowCode"], row["Width"], row["Height"],
-                    sqft_formula, row["Qty"], ttl_sqft_formula, row["GlassType"],
+                    idx + 1,
+                    row["WindowCode"],
+                    row["Width"],
+                    row["Height"],
+                    sqft_formula,
+                    row["Qty"],
+                    ttl_sqft_formula,
+                    glass_spec,
                 ])
 
                 for c in range(1, len(headers) + 1):
                     cell = ws.cell(row=r_idx, column=c)
                     cell.font = data_font
+                    cell.fill = row_fill
                     cell.border = thin_border
-                    if c in [3, 4]:
-                        cell.number_format = "0"
-                        cell.alignment = Alignment(horizontal="right")
-                    elif c == 5:
-                        cell.number_format = "0.000000"
-                        cell.alignment = Alignment(horizontal="right")
-                    elif c == 6:
-                        cell.number_format = "0"
-                        cell.alignment = Alignment(horizontal="center")
-                    elif c == 7:
-                        cell.number_format = "0.000000"
-                        cell.alignment = Alignment(horizontal="right")
 
-            tot_row = len(df_merged) + 3
+                    if c in [1, 6]:
+                        cell.alignment = Alignment(horizontal="center", vertical="center")
+                    elif c in [3, 4]:
+                        cell.number_format = "0"
+                        cell.alignment = Alignment(horizontal="center", vertical="center")
+                    elif c in [5, 7]:
+                        cell.number_format = "0.00"
+                        cell.alignment = Alignment(horizontal="center", vertical="center")
+                    else:
+                        cell.alignment = Alignment(horizontal="left", vertical="center")
+
+            # --- Total Row ---
+            tot_row = len(df_sorted) + 3
             ws.cell(row=tot_row, column=5, value="TOTAL").font = total_font
-            ws.cell(row=tot_row, column=5).alignment = Alignment(horizontal="right")
+            ws.cell(row=tot_row, column=5).alignment = Alignment(horizontal="center", vertical="center")
 
             qty_sum = ws.cell(row=tot_row, column=6, value=f"=SUM(F3:F{tot_row-1})")
             qty_sum.font = total_font
             qty_sum.number_format = "0"
-            qty_sum.alignment = Alignment(horizontal="center")
+            qty_sum.alignment = Alignment(horizontal="center", vertical="center")
 
             ttl_sqft_sum = ws.cell(row=tot_row, column=7, value=f"=SUM(G3:G{tot_row-1})")
             ttl_sqft_sum.font = total_font
-            ttl_sqft_sum.number_format = "0.000000"
-            ttl_sqft_sum.alignment = Alignment(horizontal="right")
+            ttl_sqft_sum.number_format = "0.00"
+            ttl_sqft_sum.alignment = Alignment(horizontal="center", vertical="center")
 
             for c in range(1, len(headers) + 1):
                 cell = ws.cell(row=tot_row, column=c)
-                cell.fill = total_fill
-                cell.border = thick_top_double_bottom
+                cell.border = thin_border
 
+            # Column Auto-Width Adjustments
             for col in ws.columns:
                 max_len = max(len(str(cell.value or "")) for cell in col)
                 col_letter = get_column_letter(col[0].column)
-                ws.column_dimensions[col_letter].width = max(max_len + 3, 14)
+                ws.column_dimensions[col_letter].width = max(max_len + 3, 12)
 
             output = io.BytesIO()
             wb.save(output)
@@ -1013,7 +1060,7 @@ if "merged_df" in st.session_state:
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.success("✅ Requirement Excel Sheet Ready! Formatted with Calibri typography, blue header styling, borders, MEASUREMENTS sheet & OC breakdown.")
+        st.success("✅ Requirement Excel Sheet Ready! Glass-wise color grouped, centered headings, borders & auto formulas added.")
         
         st.download_button(
             label="📥 DOWNLOAD OFFICIAL REQUIREMENT SHEET (.XLSX)",
