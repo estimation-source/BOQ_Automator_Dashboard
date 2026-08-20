@@ -169,34 +169,60 @@ st.markdown(
         margin-top: 6px;
     }
 
+    /* PRIMARY BLUE BUTTON - COMPACT & NORMAL FONT WEIGHT */
     div.stButton > button[kind="primary"] {
         background-color: #2563eb !important;
+        background: #2563eb !important;
+        border: 1px solid #2563eb !important;
         color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
         border-radius: 6px !important;
-        border: none !important;
-        padding: 8px 20px !important;
+        height: 38px !important;
+        padding: 0 16px !important;
+        box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2) !important;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        background-color: #1d4ed8 !important;
+        background: #1d4ed8 !important;
     }
 
+    /* SECONDARY RED BUTTON - COMPACT & NORMAL FONT WEIGHT */
     div.stButton > button[kind="secondary"] {
         background-color: #dc2626 !important;
+        background: #dc2626 !important;
+        border: 1px solid #dc2626 !important;
         color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
         border-radius: 6px !important;
-        border: none !important;
-        padding: 8px 20px !important;
+        height: 38px !important;
+        padding: 0 16px !important;
+        box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2) !important;
+    }
+    div.stButton > button[kind="secondary"]:hover {
+        background-color: #b91c1c !important;
+        background: #b91c1c !important;
     }
 
+    /* DOWNLOAD GREEN BUTTON - COMPACT & NORMAL FONT WEIGHT */
     div.stDownloadButton > button {
         background-color: #059669 !important;
+        background: #059669 !important;
+        border: 1px solid #059669 !important;
         color: #ffffff !important;
-        font-weight: 600 !important;
-        font-size: 13px !important;
         border-radius: 6px !important;
-        border: none !important;
-        padding: 10px 22px !important;
+        height: 38px !important;
+        padding: 0 16px !important;
+        box-shadow: 0 1px 2px rgba(5, 150, 105, 0.2) !important;
+    }
+    div.stDownloadButton > button:hover {
+        background-color: #047857 !important;
+        background: #047857 !important;
+    }
+
+    /* FORCE NORMAL WEIGHT (NOT BOLD) & WHITE TEXT */
+    div.stButton > button p, div.stButton > button span,
+    div.stDownloadButton > button p, div.stDownloadButton > button span {
+        color: #ffffff !important;
+        font-weight: 500 !important;
+        font-size: 13px !important;
     }
 
     .stTabs [data-baseweb="tab-list"] {
@@ -683,7 +709,7 @@ def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file:
         if qty is None:
             qty = 1
 
-        # 🎯 **FROSTED GLASS ignore करणे**
+        # FROSTED GLASS ignore करणे
         if glass_raw and "FROSTED" in str(glass_raw).upper():
             continue
 
@@ -780,10 +806,10 @@ uploaded_files = st.file_uploader(
 
 st.markdown("<br>", unsafe_allow_html=True)
 
-btn_col1, btn_col2, _ = st.columns([2, 2, 6])
+btn_col1, btn_col2, _ = st.columns([1, 1, 6])
 
 with btn_col1:
-    if st.button("🔗 Merge & Process Files", type="primary", use_container_width=True):
+    if st.button("🔗 Merge & Process Files", type="primary", use_container_width=False):
         if uploaded_files:
             with st.spinner("Extracting & Merging Records..."):
                 df_merged = process_uploaded_files(uploaded_files)
@@ -796,7 +822,7 @@ with btn_col1:
             st.warning("Please upload Excel file(s) first!")
 
 with btn_col2:
-    if st.button("🗑️ Reset Data", type="secondary", use_container_width=True):
+    if st.button("🗑️ Reset Data", type="secondary", use_container_width=False):
         for key in ["merged_df", "req_df_preview", "req_bytes", "req_generated"]:
             if key in st.session_state:
                 del st.session_state[key]
@@ -842,7 +868,7 @@ if "merged_df" in st.session_state:
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("<div class='step-title'>⚡ Step 2: Generate Official Requirement Sheet</div>", unsafe_allow_html=True)
 
-    if st.button("⚡ GENERATE REQUIREMENT SHEET (MEASUREMENTS)", type="primary"):
+    if st.button("⚡ GENERATE REQUIREMENT SHEET (MEASUREMENTS)", type="primary", use_container_width=False):
         with st.spinner("Calculating SQFT and generating Excel sheet..."):
             df_req_preview = df_merged.copy()
             df_req_preview["SQFT"] = ((df_req_preview["Width"] * df_req_preview["Height"]) / 92903.04).round(6)
@@ -984,7 +1010,7 @@ if "merged_df" in st.session_state:
             st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
 
         with tab2:
-            # 📊 OC WISE SUMMARY (Only Non-Frosted Glass Total SQFT and Specs)
+            # OC WISE SUMMARY (Only Non-Frosted Glass Total SQFT and Specs)
             df_merged_copy = df_merged.copy()
             df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
 
@@ -1060,5 +1086,5 @@ if "merged_df" in st.session_state:
             data=st.session_state["req_bytes"],
             file_name="REQUIREMENT_SHEET_MEASUREMENTS.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=False
         )
-        
