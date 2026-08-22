@@ -170,7 +170,7 @@ st.markdown(
         margin-top: 6px;
     }
 
-    /* PRIMARY BLUE BUTTON - COMPACT & NORMAL FONT WEIGHT */
+    /* PRIMARY BLUE BUTTON */
     div.stButton > button[kind="primary"] {
         background-color: #2563eb !important;
         background: #2563eb !important;
@@ -186,7 +186,7 @@ st.markdown(
         background: #1d4ed8 !important;
     }
 
-    /* SECONDARY RED BUTTON - COMPACT & NORMAL FONT WEIGHT */
+    /* SECONDARY RED BUTTON */
     div.stButton > button[kind="secondary"] {
         background-color: #dc2626 !important;
         background: #dc2626 !important;
@@ -202,7 +202,7 @@ st.markdown(
         background: #b91c1c !important;
     }
 
-    /* DOWNLOAD GREEN BUTTON - COMPACT & NORMAL FONT WEIGHT */
+    /* DOWNLOAD GREEN BUTTON */
     div.stDownloadButton > button {
         background-color: #059669 !important;
         background: #059669 !important;
@@ -218,7 +218,6 @@ st.markdown(
         background: #047857 !important;
     }
 
-    /* FORCE NORMAL WEIGHT (NOT BOLD) & WHITE TEXT */
     div.stButton > button p, div.stButton > button span,
     div.stDownloadButton > button p, div.stDownloadButton > button span {
         color: #ffffff !important;
@@ -298,7 +297,7 @@ st.markdown(
 )
 
 # ============================================================
-# Global Engine Constants & Parsing Logic (GLASS SPECIFIC)
+# Global Engine Constants & Parsing Logic
 # ============================================================
 
 HEADER_SCAN_LIMIT = 200
@@ -710,7 +709,6 @@ def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file:
         if qty is None:
             qty = 1
 
-        # FROSTED GLASS ignore करणे
         if glass_raw and "FROSTED" in str(glass_raw).upper():
             continue
 
@@ -810,7 +808,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 btn_col1, btn_col2, _ = st.columns([1, 1, 6])
 
 with btn_col1:
-    if st.button("🔗 Merge & Process Files", type="primary", use_container_width=False):
+    if st.button("Merge & Process Files", type="primary", use_container_width=False):
         if uploaded_files:
             with st.spinner("Extracting & Merging Records..."):
                 df_merged = process_uploaded_files(uploaded_files)
@@ -823,7 +821,7 @@ with btn_col1:
             st.warning("Please upload Excel file(s) first!")
 
 with btn_col2:
-    if st.button("🗑️ Reset Data", type="secondary", use_container_width=False):
+    if st.button("Reset Data", type="secondary", use_container_width=False):
         for key in ["merged_df", "req_df_preview", "req_bytes", "req_generated"]:
             if key in st.session_state:
                 del st.session_state[key]
@@ -906,11 +904,18 @@ if "merged_df" in st.session_state:
             title_fill = PatternFill(start_color="DCE6F1", end_color="DCE6F1", fill_type="solid")
             total_fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
 
-            # Soft Pastel colors for different Glass Types
+            # HIGH-CONTRAST DISTINCT PASTEL COLORS FOR DIFFERENT GLASS TYPES
             glass_color_palette = [
-                "EBF1F5", "F2EFE9", "EAEFF2", "F4F1EA", 
-                "EEF4F2", "F3EFEF", "EFEFF5", "F2F5EB"
+                "E2EFDA",  # Light Mint Green (Row 3, Glass 1)
+                "FFF2CC",  # Soft Cream Yellow (Row 4, Glass 2)
+                "DDEBF7",  # Sky Blue (Glass 3)
+                "FCE4D6",  # Light Peach (Glass 4)
+                "E8D8F8",  # Lavender (Glass 5)
+                "F8CECC",  # Soft Pink (Glass 6)
+                "E1F5FE",  # Ice Blue (Glass 7)
+                "FFF3E0"   # Pastel Orange (Glass 8)
             ]
+            
             unique_glasses = list(df_merged["GlassType"].unique())
             glass_fill_map = {}
             for g_idx, g_spec in enumerate(unique_glasses):
@@ -928,7 +933,7 @@ if "merged_df" in st.session_state:
                 bottom=Side(style="double", color="000000"),
             )
 
-            # ROW 1: MERGED HEADER WITH CURRENT AUTO DATE
+            # AUTO CURRENT DATE GENERATION LOGIC
             today_str = datetime.now().strftime("%d %b %Y").upper()
             title_text = f"1 WIN-SQUARE {today_str}"
             
@@ -943,7 +948,7 @@ if "merged_df" in st.session_state:
                 c_cell.fill = title_fill
                 c_cell.border = thin_border
 
-            # ROW 2: HEADERS
+            # ROW 2: HEADERS (12 Font Size)
             headers = ["Sr.No", "WINDOW CODE", "WIDTH", "HEIGHT", "SQFT", "QTY", "TTL SQFT", "REMARKS"]
             for col_i, h_text in enumerate(headers, 1):
                 cell = ws.cell(row=2, column=col_i, value=h_text)
@@ -952,7 +957,7 @@ if "merged_df" in st.session_state:
                 cell.alignment = Alignment(horizontal="center", vertical="center")
                 cell.border = thin_border
 
-            # ROW 3+: DATA ROWS
+            # ROW 3+: DATA ROWS (11 Font Size)
             for idx, row in df_merged.iterrows():
                 r_idx = idx + 3
                 sqft_formula = f"=ROUND((C{r_idx}*D{r_idx})/92903.04, 6)"
@@ -963,7 +968,7 @@ if "merged_df" in st.session_state:
                     sqft_formula, row["Qty"], ttl_sqft_formula, row["GlassType"],
                 ]
 
-                # Current row fill according to Glass Spec
+                # Distinct Row Fill according to Glass Spec
                 current_fill = glass_fill_map.get(row["GlassType"], PatternFill(fill_type=None))
 
                 for col_i, val in enumerate(row_data, 1):
@@ -1048,7 +1053,6 @@ if "merged_df" in st.session_state:
             st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
 
         with tab2:
-            # OC WISE SUMMARY (Only Non-Frosted Glass Total SQFT and Specs)
             df_merged_copy = df_merged.copy()
             df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
 
@@ -1117,7 +1121,7 @@ if "merged_df" in st.session_state:
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.success("✅ Requirement Excel Sheet Ready! Formatted with merged title header, dynamic date, glass variant row styling & 11pt/12pt typography.")
+        st.success("✅ Requirement Excel Sheet Ready! Formatted with distinct row colors and dynamic auto-date.")
         
         st.download_button(
             label="📥 DOWNLOAD OFFICIAL REQUIREMENT SHEET (.XLSX)",
