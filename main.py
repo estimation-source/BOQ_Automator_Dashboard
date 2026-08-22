@@ -170,7 +170,6 @@ st.markdown(
         margin-top: 6px;
     }
 
-    /* PRIMARY BLUE BUTTON - COMPACT & NORMAL FONT WEIGHT */
     div.stButton > button[kind="primary"] {
         background-color: #2563eb !important;
         background: #2563eb !important;
@@ -186,7 +185,6 @@ st.markdown(
         background: #1d4ed8 !important;
     }
 
-    /* SECONDARY RED BUTTON - COMPACT & NORMAL FONT WEIGHT */
     div.stButton > button[kind="secondary"] {
         background-color: #dc2626 !important;
         background: #dc2626 !important;
@@ -202,7 +200,6 @@ st.markdown(
         background: #b91c1c !important;
     }
 
-    /* DOWNLOAD GREEN BUTTON - COMPACT & NORMAL FONT WEIGHT */
     div.stDownloadButton > button {
         background-color: #059669 !important;
         background: #059669 !important;
@@ -218,7 +215,6 @@ st.markdown(
         background: #047857 !important;
     }
 
-    /* FORCE NORMAL WEIGHT (NOT BOLD) & WHITE TEXT */
     div.stButton > button p, div.stButton > button span,
     div.stDownloadButton > button p, div.stDownloadButton > button span {
         color: #ffffff !important;
@@ -273,7 +269,7 @@ with st.sidebar:
         <div class='quick-guide-step'><b>2.</b> Click on <b>Merge & Process Files</b>.</div>
         <div class='quick-guide-step'><b>3.</b> Review merged glass records.</div>
         <div class='quick-guide-step'><b>4.</b> Click <b>Generate Requirement Sheet (MEASUREMENTS)</b>.</div>
-        <div class='quick-guide-step'><b>5.</b> Download styled Excel with auto formulas & OC breakdown.</div>
+        <div class='quick-guide-step'><b>5.</b> Download styled Excel with Glass-Type specific colors.</div>
         <div class='quick-guide-step'><b>6.</b> Use <b>Reset Data</b> to clear current workspace.</div>
         """,
         unsafe_allow_html=True
@@ -841,7 +837,7 @@ if "merged_df" in st.session_state:
     st.markdown("<div class='step-title'>⚡ Step 2: Generate Official Requirement Sheet</div>", unsafe_allow_html=True)
 
     if st.button("⚡ GENERATE REQUIREMENT SHEET (MEASUREMENTS)", type="primary", use_container_width=False):
-        with st.spinner("Calculating SQFT and generating Excel sheet..."):
+        with st.spinner("Calculating SQFT and applying Glass-Type colors..."):
             
             # Dashboard Live Preview Preparation
             df_req_preview = df_merged.copy()
@@ -869,7 +865,7 @@ if "merged_df" in st.session_state:
             ws.title = "Sheet1"
             ws.views.sheetView[0].showGridLines = True
 
-            # EXACT STYLES
+            # STYLES & FONTS
             title_font = Font(name="Calibri", size=16, bold=True, color="000000")
             header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
             data_font = Font(name="Calibri", size=11, bold=False, color="000000")
@@ -877,6 +873,18 @@ if "merged_df" in st.session_state:
 
             title_fill = PatternFill(start_color="DDEBF7", end_color="DDEBF7", fill_type="solid")
             header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
+
+            # GLASS TYPE COLOR MAPPING (SOFT PASTEL SHADES)
+            GLASS_COLOR_MAP = {
+                "6MM": "E2EFDA",        # Soft Green
+                "8MM": "FFF2CC",        # Soft Yellow
+                "10MM": "FCE4D6",       # Soft Peach
+                "12MM": "E7E6E6",       # Soft Grey
+                "LAMINATED": "E1D5E7",  # Soft Purple
+                "DGU": "D9E1F2",        # Soft Blue
+                "NOT SPECIFIED": "F8CBAD" # Soft Coral/Orange
+            }
+            DEFAULT_ROW_FILL = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
 
             thin_border = Border(
                 left=Side(style="thin", color="000000"),
@@ -911,11 +919,20 @@ if "merged_df" in st.session_state:
                 cell.alignment = Alignment(horizontal="center", vertical="center")
                 cell.border = thin_border
 
-            # DATA ROWS
+            # DATA ROWS WITH DYNAMIC COLORING ACCORDING TO GLASS TYPE
             for idx, row in df_merged.iterrows():
                 r_idx = idx + 3
                 sqft_formula = f"=ROUND((C{r_idx}*D{r_idx})/92903.04, 2)"
                 ttl_sqft_formula = f"=E{r_idx}*F{r_idx}"
+
+                glass_spec_str = str(row["GlassType"]).upper()
+                row_fill = DEFAULT_ROW_FILL
+
+                # Find Color Based on Glass Keywords
+                for key, hex_color in GLASS_COLOR_MAP.items():
+                    if key in glass_spec_str:
+                        row_fill = PatternFill(start_color=hex_color, end_color=hex_color, fill_type="solid")
+                        break
 
                 row_data = [
                     idx + 1,
@@ -933,6 +950,7 @@ if "merged_df" in st.session_state:
                 for col_i, val in enumerate(row_data, 1):
                     cell = ws.cell(row=r_idx, column=col_i, value=val)
                     cell.font = data_font
+                    cell.fill = row_fill
                     cell.border = thin_border
 
                     if col_i in [1, 2, 8]:
@@ -1072,7 +1090,7 @@ if "merged_df" in st.session_state:
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.success("✅ Requirement Excel Sheet Ready! Styled with Exact Header, Formulas & Centered Alignment.")
+        st.success("✅ Requirement Excel Sheet Ready! Glass Types Color Coding Applied.")
         
         file_download_name = f"{st.session_state.get('generated_title_name', '1 WIN-SQUARE')}.xlsx"
         st.download_button(
