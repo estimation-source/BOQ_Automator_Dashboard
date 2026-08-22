@@ -269,7 +269,7 @@ with st.sidebar:
         <div class='quick-guide-step'><b>2.</b> Click on <b>Merge & Process Files</b>.</div>
         <div class='quick-guide-step'><b>3.</b> Review merged glass records.</div>
         <div class='quick-guide-step'><b>4.</b> Click <b>Generate Requirement Sheet (MEASUREMENTS)</b>.</div>
-        <div class='quick-guide-step'><b>5.</b> Download styled Excel with Glass-Type specific colors.</div>
+        <div class='quick-guide-step'><b>5.</b> Download clean Excel file.</div>
         <div class='quick-guide-step'><b>6.</b> Use <b>Reset Data</b> to clear current workspace.</div>
         """,
         unsafe_allow_html=True
@@ -291,7 +291,7 @@ st.markdown(
 )
 
 # ============================================================
-# Global Engine Constants & Parsing Logic (GLASS SPECIFIC)
+# Global Engine Constants & Parsing Logic
 # ============================================================
 
 HEADER_SCAN_LIMIT = 200
@@ -312,37 +312,6 @@ KEYWORDS = {
     "QTY": ["QTY"],
     "GLASS": [["GLASS"], ["DESP"]],
 }
-
-# Dynamic Distinct Pastel Color List (No Collisions!)
-PASTEL_COLORS = [
-    "FCE4D6", # Soft Orange / Coral
-    "E2EFDA", # Soft Mint Green
-    "E1D5E7", # Soft Purple / Lavender
-    "FFF2CC", # Soft Yellow
-    "D9E1F2", # Soft Sky Blue
-    "F8CBAD", # Peach
-    "D9EAD3", # Light Green
-    "F4CCCC", # Soft Pink
-    "C9DAF8", # Periwinkle Blue
-    "EFEFEF", # Soft Light Grey
-    "D0E0E3", # Soft Ice Blue
-    "FCE5CD"  # Light Cream
-]
-
-def get_glass_color_hex(glass_text: str) -> str:
-    text = str(glass_text).upper().strip()
-    if not text or text == "NOT SPECIFIED" or text == "NAN":
-        return "F2F2F2"
-    
-    # Clean up multiple spaces
-    clean_text = re.sub(r"\s+", " ", text)
-    
-    # Exact distinct hashing algorithm based on full exact string length & char codes
-    # This guarantees '5MM TOUGHENED' and '5MM REFLECTIVE TOUGHENED' get completely DIFFERENT colors!
-    val_sum = sum(ord(c) * (i + 1) for i, c in enumerate(clean_text))
-    color_index = val_sum % len(PASTEL_COLORS)
-    
-    return PASTEL_COLORS[color_index]
 
 def standardize_glass_spec(val: str) -> str:
     if pd.isna(val) or not str(val).strip():
@@ -809,7 +778,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 btn_col1, btn_col2, _ = st.columns([1, 1, 6])
 
 with btn_col1:
-    if st.button("🔗 Merge & Process Files", type="primary", use_container_width=False):
+    if st.button("Merge & Process Files", type="primary", use_container_width=False):
         if uploaded_files:
             with st.spinner("Extracting & Merging Records..."):
                 df_merged = process_uploaded_files(uploaded_files)
@@ -822,7 +791,7 @@ with btn_col1:
             st.warning("Please upload Excel file(s) first!")
 
 with btn_col2:
-    if st.button("🗑️ Reset Data", type="secondary", use_container_width=False):
+    if st.button("Reset Data", type="secondary", use_container_width=False):
         for key in ["merged_df", "req_df_preview", "req_bytes", "req_generated"]:
             if key in st.session_state:
                 del st.session_state[key]
@@ -868,7 +837,7 @@ if "merged_df" in st.session_state:
     st.markdown("<div class='step-title'>⚡ Step 2: Generate Official Requirement Sheet</div>", unsafe_allow_html=True)
 
     if st.button("⚡ GENERATE REQUIREMENT SHEET (MEASUREMENTS)", type="primary", use_container_width=False):
-        with st.spinner("Calculating SQFT and applying Glass-Type colors..."):
+        with st.spinner("Calculating SQFT..."):
             
             # Dashboard Live Preview Preparation
             df_req_preview = df_merged.copy()
@@ -890,7 +859,7 @@ if "merged_df" in st.session_state:
             df_req_preview = df_req_preview[preview_cols]
             st.session_state["req_df_preview"] = df_req_preview
 
-            # OpenPyXL Exact Excel Generation Logic
+            # OpenPyXL Excel Generation Logic (NO COLOR FILL IN DATA ROWS)
             wb = openpyxl.Workbook()
             ws = wb.active
             ws.title = "Sheet1"
@@ -938,16 +907,11 @@ if "merged_df" in st.session_state:
                 cell.alignment = Alignment(horizontal="center", vertical="center")
                 cell.border = thin_border
 
-            # DATA ROWS WITH DYNAMIC COLORING ACCORDING TO EXACT GLASS TYPE STRING
+            # DATA ROWS (PLAIN WHITE / NO FILL)
             for idx, row in df_merged.iterrows():
                 r_idx = idx + 3
                 sqft_formula = f"=ROUND((C{r_idx}*D{r_idx})/92903.04, 2)"
                 ttl_sqft_formula = f"=E{r_idx}*F{r_idx}"
-
-                # Calculate Distinct Color
-                glass_type_str = str(row["GlassType"])
-                hex_color = get_glass_color_hex(glass_type_str)
-                row_fill = PatternFill(start_color=hex_color, end_color=hex_color, fill_type="solid")
 
                 row_data = [
                     idx + 1,
@@ -965,8 +929,7 @@ if "merged_df" in st.session_state:
                 for col_i, val in enumerate(row_data, 1):
                     cell = ws.cell(row=r_idx, column=col_i, value=val)
                     cell.font = data_font
-                    cell.fill = row_fill
-                    cell.border = thin_border
+                    cell.border = thin_border  # नो बॅकग्राउंड कलर
 
                     if col_i in [1, 2, 8]:
                         cell.alignment = Alignment(horizontal="center", vertical="center")
@@ -1034,17 +997,12 @@ if "merged_df" in st.session_state:
         ])
 
         with tab1:
-            # Color Styling on Streamlit DataFrame Preview with exact string distinction
-            def style_row_by_glass(row):
-                glass_str = str(row["REMARKS"])
-                color = get_glass_color_hex(glass_str)
-                return [f'background-color: #{color}; color: #000000;'] * len(row)
-
-            styled_req_df = req_df.style.apply(style_row_by_glass, axis=1).format({
-                "SQFT": "{:.2f}",
-                "TTL SQFT": "{:.2f}"
-            })
-            st.dataframe(styled_req_df, use_container_width=True, height=350, hide_index=True)
+            st.dataframe(
+                req_df.style.format({"SQFT": "{:.2f}", "TTL SQFT": "{:.2f}"}), 
+                use_container_width=True, 
+                height=350, 
+                hide_index=True
+            )
 
         with tab2:
             df_merged_copy = df_merged.copy()
@@ -1112,14 +1070,10 @@ if "merged_df" in st.session_state:
             glass_breakdown.columns = ["GlassType", "Qty"]
             glass_breakdown.insert(0, "Sr. No.", range(1, len(glass_breakdown) + 1))
 
-            def style_breakdown(row):
-                color = get_glass_color_hex(row["GlassType"])
-                return [f'background-color: #{color}; color: #000000;'] * len(row)
-
-            st.dataframe(glass_breakdown.style.apply(style_breakdown, axis=1), use_container_width=True, hide_index=True)
+            st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.success("✅ Requirement Excel Sheet Ready! Glass Types Color Coding Corrected.")
+        st.success("✅ Requirement Excel Sheet Ready (Plain / No Colors)!")
         
         file_download_name = f"{st.session_state.get('generated_title_name', '1 WIN-SQUARE')}.xlsx"
         st.download_button(
