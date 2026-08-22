@@ -894,7 +894,12 @@ if "merged_df" in st.session_state:
             ws.title = "MEASUREMENTS"
             ws.views.sheetView[0].showGridLines = True
 
-            # FONT STYLES (Title Size: 16pt, Header Size: 12pt, Data Size: 11pt)
+            # -------------------------------------------------------------
+            # EXACT FONT SIZE CONFIGURATION:
+            # 1. Main Title Header (Row 1): SIZE 16
+            # 2. Table Column Headers (Row 2): SIZE 12
+            # 3. Data Rows: SIZE 11
+            # -------------------------------------------------------------
             title_font = Font(name="Calibri", size=16, bold=True, color="000000")
             header_font = Font(name="Calibri", size=12, bold=True, color="FFFFFF")
             data_font = Font(name="Calibri", size=11)
@@ -933,12 +938,14 @@ if "merged_df" in st.session_state:
                 bottom=Side(style="double", color="000000"),
             )
 
-            # AUTO CURRENT DATE GENERATION LOGIC
+            # AUTO CURRENT DATE GENERATION LOGIC (Format: DD MMM YYYY)
             today_str = datetime.now().strftime("%d %b %Y").upper()
             title_text = f"1 WIN-SQUARE {today_str}"
             st.session_state["generated_title_name"] = title_text
             
+            # ROW 1: TITLE ROW (FONT SIZE 16)
             ws.merge_cells("A1:H1")
+            ws.row_dimensions[1].height = 28  # Row Height adjust for 16pt font
             cell_a1 = ws["A1"]
             cell_a1.value = title_text
             cell_a1.font = title_font
@@ -949,8 +956,9 @@ if "merged_df" in st.session_state:
                 c_cell.fill = title_fill
                 c_cell.border = thin_border
 
-            # ROW 2: HEADERS (12 Font Size)
+            # ROW 2: HEADERS (FONT SIZE 12)
             headers = ["Sr.No", "WINDOW CODE", "WIDTH", "HEIGHT", "SQFT", "QTY", "TTL SQFT", "REMARKS"]
+            ws.row_dimensions[2].height = 24
             for col_i, h_text in enumerate(headers, 1):
                 cell = ws.cell(row=2, column=col_i, value=h_text)
                 cell.font = header_font
@@ -958,7 +966,7 @@ if "merged_df" in st.session_state:
                 cell.alignment = Alignment(horizontal="center", vertical="center")
                 cell.border = thin_border
 
-            # ROW 3+: DATA ROWS (11 Font Size)
+            # ROW 3+: DATA ROWS (FONT SIZE 11)
             for idx, row in df_merged.iterrows():
                 r_idx = idx + 3
                 sqft_formula = f"=ROUND((C{r_idx}*D{r_idx})/92903.04, 6)"
@@ -1121,8 +1129,9 @@ if "merged_df" in st.session_state:
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.success("✅ Requirement Excel Sheet Ready! Header Font Size 16pt and File Name set to match heading.")
+        st.success("✅ Requirement Excel Sheet Ready! Header Font Size 16pt & File Name matches screenshot.")
         
+        # EXACT FILE NAME GENERATION
         file_download_name = f"{st.session_state.get('generated_title_name', '1 WIN-SQUARE')}.xlsx"
 
         st.download_button(
