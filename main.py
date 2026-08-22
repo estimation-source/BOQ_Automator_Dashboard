@@ -808,7 +808,7 @@ st.markdown("<br>", unsafe_allow_html=True)
 btn_col1, btn_col2, _ = st.columns([1, 1, 6])
 
 with btn_col1:
-    if st.button("Merge & Process Files", type="primary", use_container_width=False):
+    if st.button("🔗 Merge & Process Files", type="primary", use_container_width=False):
         if uploaded_files:
             with st.spinner("Extracting & Merging Records..."):
                 df_merged = process_uploaded_files(uploaded_files)
@@ -821,8 +821,8 @@ with btn_col1:
             st.warning("Please upload Excel file(s) first!")
 
 with btn_col2:
-    if st.button("Reset Data", type="secondary", use_container_width=False):
-        for key in ["merged_df", "req_df_preview", "req_bytes", "req_generated"]:
+    if st.button("🗑️ Reset Data", type="secondary", use_container_width=False):
+        for key in ["merged_df", "req_df_preview", "req_bytes", "req_generated", "generated_title_name"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.session_state["uploader_key"] += 1
@@ -894,8 +894,8 @@ if "merged_df" in st.session_state:
             ws.title = "MEASUREMENTS"
             ws.views.sheetView[0].showGridLines = True
 
-            # FONT STYLES (Requirement: Data 11pt, Header 12pt)
-            title_font = Font(name="Calibri", size=12, bold=True, color="000000")
+            # FONT STYLES (Title Size: 16pt, Header Size: 12pt, Data Size: 11pt)
+            title_font = Font(name="Calibri", size=16, bold=True, color="000000")
             header_font = Font(name="Calibri", size=12, bold=True, color="FFFFFF")
             data_font = Font(name="Calibri", size=11)
             total_font = Font(name="Calibri", size=12, bold=True)
@@ -904,16 +904,16 @@ if "merged_df" in st.session_state:
             title_fill = PatternFill(start_color="DCE6F1", end_color="DCE6F1", fill_type="solid")
             total_fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
 
-            # HIGH-CONTRAST DISTINCT PASTEL COLORS FOR DIFFERENT GLASS TYPES
+            # DISTINCT PASTEL COLORS FOR DIFFERENT GLASS TYPES
             glass_color_palette = [
-                "E2EFDA",  # Light Mint Green (Row 3, Glass 1)
-                "FFF2CC",  # Soft Cream Yellow (Row 4, Glass 2)
-                "DDEBF7",  # Sky Blue (Glass 3)
-                "FCE4D6",  # Light Peach (Glass 4)
-                "E8D8F8",  # Lavender (Glass 5)
-                "F8CECC",  # Soft Pink (Glass 6)
-                "E1F5FE",  # Ice Blue (Glass 7)
-                "FFF3E0"   # Pastel Orange (Glass 8)
+                "E2EFDA",  # Light Mint Green
+                "FFF2CC",  # Soft Cream Yellow
+                "DDEBF7",  # Sky Blue
+                "FCE4D6",  # Light Peach
+                "E8D8F8",  # Lavender
+                "F8CECC",  # Soft Pink
+                "E1F5FE",  # Ice Blue
+                "FFF3E0"   # Pastel Orange
             ]
             
             unique_glasses = list(df_merged["GlassType"].unique())
@@ -936,6 +936,7 @@ if "merged_df" in st.session_state:
             # AUTO CURRENT DATE GENERATION LOGIC
             today_str = datetime.now().strftime("%d %b %Y").upper()
             title_text = f"1 WIN-SQUARE {today_str}"
+            st.session_state["generated_title_name"] = title_text
             
             ws.merge_cells("A1:H1")
             cell_a1 = ws["A1"]
@@ -968,7 +969,6 @@ if "merged_df" in st.session_state:
                     sqft_formula, row["Qty"], ttl_sqft_formula, row["GlassType"],
                 ]
 
-                # Distinct Row Fill according to Glass Spec
                 current_fill = glass_fill_map.get(row["GlassType"], PatternFill(fill_type=None))
 
                 for col_i, val in enumerate(row_data, 1):
@@ -1121,12 +1121,14 @@ if "merged_df" in st.session_state:
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.success("✅ Requirement Excel Sheet Ready! Formatted with distinct row colors and dynamic auto-date.")
+        st.success("✅ Requirement Excel Sheet Ready! Header Font Size 16pt and File Name set to match heading.")
         
+        file_download_name = f"{st.session_state.get('generated_title_name', '1 WIN-SQUARE')}.xlsx"
+
         st.download_button(
             label="📥 DOWNLOAD OFFICIAL REQUIREMENT SHEET (.XLSX)",
             data=st.session_state["req_bytes"],
-            file_name=f"REQUIREMENT_SHEET_MEASUREMENTS_{datetime.now().strftime('%d_%b_%Y')}.xlsx",
+            file_name=file_download_name,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=False
         )
