@@ -26,9 +26,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# ============================================================
-# 2. FIX CSS: Header चालू ठेवून Sidebar Toggle Button Visible ठेवणे
-# ============================================================
+# Sidebar Toggle CSS
 st.markdown("""
     <style>
     header[data-testid="stHeader"] {
@@ -68,13 +66,10 @@ st.markdown("""
     </style>
 """, unsafe_allow_html=True)
 
-# State Management
 if "uploader_key" not in st.session_state:
     st.session_state["uploader_key"] = 0
 
-# ============================================================
-# 3. UI Layout & Fonts CSS
-# ============================================================
+# UI Fonts & General CSS
 st.markdown(
     """
     <style>
@@ -95,21 +90,6 @@ st.markdown(
     [data-testid="stSidebar"] {
         background-color: #f1f5f9;
         border-right: 1px solid #e2e8f0;
-    }
-    
-    .quick-guide-title {
-        font-size: 15px;
-        font-weight: 700;
-        color: #0f172a;
-        margin-top: 15px;
-        margin-bottom: 12px;
-    }
-    
-    .quick-guide-step {
-        font-size: 13px;
-        color: #475569;
-        margin-bottom: 10px;
-        line-height: 1.4;
     }
 
     .hero-container {
@@ -142,114 +122,37 @@ st.markdown(
         font-weight: 700;
         color: #1e293b;
         margin-bottom: 12px;
-        display: flex;
-        align-items: center;
-        gap: 8px;
-    }
-
-    .kpi-card-box {
-        background: #ffffff;
-        border: 1px solid #e2e8f0;
-        border-radius: 10px;
-        padding: 16px 20px;
-        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
-    }
-
-    .kpi-title-lbl {
-        font-size: 11px;
-        font-weight: 700;
-        color: #64748b;
-        text-transform: uppercase;
-        letter-spacing: 0.5px;
-    }
-
-    .kpi-val-lbl {
-        font-size: 24px;
-        font-weight: 800;
-        color: #0f172a;
-        margin-top: 6px;
     }
 
     div.stButton > button[kind="primary"] {
         background-color: #2563eb !important;
-        background: #2563eb !important;
-        border: 1px solid #2563eb !important;
         color: #ffffff !important;
         border-radius: 6px !important;
         height: 38px !important;
-        padding: 0 16px !important;
-        box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2) !important;
-    }
-    div.stButton > button[kind="primary"]:hover {
-        background-color: #1d4ed8 !important;
-        background: #1d4ed8 !important;
     }
 
     div.stButton > button[kind="secondary"] {
         background-color: #dc2626 !important;
-        background: #dc2626 !important;
-        border: 1px solid #dc2626 !important;
         color: #ffffff !important;
         border-radius: 6px !important;
         height: 38px !important;
-        padding: 0 16px !important;
-        box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2) !important;
-    }
-    div.stButton > button[kind="secondary"]:hover {
-        background-color: #b91c1c !important;
-        background: #b91c1c !important;
     }
 
     div.stDownloadButton > button {
         background-color: #059669 !important;
-        background: #059669 !important;
-        border: 1px solid #059669 !important;
         color: #ffffff !important;
         border-radius: 6px !important;
         height: 38px !important;
-        padding: 0 16px !important;
-        box-shadow: 0 1px 2px rgba(5, 150, 105, 0.2) !important;
-    }
-    div.stDownloadButton > button:hover {
-        background-color: #047857 !important;
-        background: #047857 !important;
-    }
-
-    div.stButton > button p, div.stButton > button span,
-    div.stDownloadButton > button p, div.stDownloadButton > button span {
-        color: #ffffff !important;
-        font-weight: 500 !important;
-        font-size: 13px !important;
-    }
-
-    .stTabs [data-baseweb="tab-list"] {
-        gap: 16px;
-        border-bottom: 1px solid #e2e8f0;
-    }
-
-    .stTabs [data-baseweb="tab"] {
-        height: 40px;
-        white-space: pre;
-        font-size: 13px;
-        font-weight: 600;
-        color: #64748b;
-    }
-
-    .stTabs [aria-selected="true"] {
-        color: #2563eb !important;
-        border-bottom: 2px solid #2563eb !important;
     }
     </style>
     """,
     unsafe_allow_html=True,
 )
 
-
 def get_image_path(filename):
     if hasattr(sys, "_MEIPASS"):
         return os.path.join(sys._MEIPASS, filename)
     return os.path.join(os.path.abspath("."), filename)
-
 
 # Sidebar
 with st.sidebar:
@@ -259,30 +162,19 @@ with st.sidebar:
         with col_s2:
             st.image(Image.open(logo_file), width=110)
     else:
-        st.markdown("<h2 style='text-align: center; color:#1e293b;'><b>win square</b></h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color:#1e293b;'><b>WIN-SQUARE</b></h2>", unsafe_allow_html=True)
     
     st.markdown("---")
-    st.markdown("<div class='quick-guide-title'>💡 Quick Guide</div>", unsafe_allow_html=True)
-    st.markdown(
-        """
-        <div class='quick-guide-step'><b>1.</b> Upload multi-sheet Excel BOQ files.</div>
-        <div class='quick-guide-step'><b>2.</b> Click on <b>Merge & Process Files</b>.</div>
-        <div class='quick-guide-step'><b>3.</b> Review merged glass records.</div>
-        <div class='quick-guide-step'><b>4.</b> Click <b>Generate Requirement Sheet (MEASUREMENTS)</b>.</div>
-        <div class='quick-guide-step'><b>5.</b> Download styled Excel with auto formulas & OC breakdown.</div>
-        <div class='quick-guide-step'><b>6.</b> Use <b>Reset Data</b> to clear current workspace.</div>
-        """,
-        unsafe_allow_html=True
-    )
+    st.markdown("<b>💡 Quick Guide</b>", unsafe_allow_html=True)
+    st.markdown("1. Upload BOQ Files.<br>2. Click Merge & Process.<br>3. Generate Requirement Sheet.<br>4. Download Exact Excel.", unsafe_allow_html=True)
 
-
-# Hero Banner
+# Main Banner
 st.markdown(
     """
     <div class="hero-container">
         <div>
             <div class="hero-title-text">Requirement Sheet Engine</div>
-            <div class="hero-sub-text">Enterprise BOQ Extraction, File Merger & Automatic Measurement Generator</div>
+            <div class="hero-sub-text">BOQ Processing & Exact Sheet Generation</div>
         </div>
     </div>
     """,
@@ -308,7 +200,6 @@ KEYWORDS = {
     "GLASS": [["GLASS"], ["DESP"]],
 }
 
-
 def standardize_glass_spec(val: str) -> str:
     if pd.isna(val) or not str(val).strip():
         return "NOT SPECIFIED"
@@ -316,7 +207,6 @@ def standardize_glass_spec(val: str) -> str:
     if text.lower() == "nan" or not text:
         return "NOT SPECIFIED"
     return re.sub(r"\s+", " ", text).strip()
-
 
 @dataclass(slots=True)
 class HeaderInfo:
@@ -328,13 +218,11 @@ class HeaderInfo:
     glass_col: Optional[int] = None
     columns: Dict[str, Optional[int]] = field(default_factory=dict)
 
-
 @dataclass(slots=True)
 class HeaderBlock:
     header: HeaderInfo
     start_row: int
     end_row: int
-
 
 @dataclass(slots=True)
 class GlassRecord:
@@ -346,17 +234,14 @@ class GlassRecord:
     SourceFile: str
     SheetName: str
 
-
 def normalize_header(text: Any) -> str:
     if pd.isna(text):
         return ""
     text = str(text).upper().strip()
     return re.sub(HEADER_REMOVE_PATTERN, "", text)
 
-
 def normalize_header_row(row: pd.Series) -> List[str]:
     return [normalize_header(val) for val in row.tolist()]
-
 
 def contains_keywords(text: str, keyword_groups: List[Any]) -> bool:
     if not text:
@@ -376,7 +261,6 @@ def contains_keywords(text: str, keyword_groups: List[Any]) -> bool:
         if matched:
             return True
     return False
-
 
 def detect_column(header_row: List[str], keyword_groups: List[Any]) -> Optional[int]:
     for index, value in enumerate(header_row):
@@ -401,7 +285,6 @@ def detect_column(header_row: List[str], keyword_groups: List[Any]) -> Optional[
             if matched:
                 return index
     return None
-
 
 def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
     normalized = normalize_header_row(header_row)
@@ -437,7 +320,6 @@ def detect_header_columns(header_row: pd.Series) -> Dict[str, Optional[int]]:
 
     return columns
 
-
 def is_business_header(row: pd.Series) -> bool:
     normalized = normalize_header_row(row)
     has_code = False
@@ -457,7 +339,6 @@ def is_business_header(row: pd.Series) -> bool:
             has_glass = True
 
     return has_code and has_qty and has_glass
-
 
 def find_header_blocks(dataframe: pd.DataFrame) -> List[HeaderInfo]:
     headers: List[HeaderInfo] = []
@@ -482,7 +363,6 @@ def find_header_blocks(dataframe: pd.DataFrame) -> List[HeaderInfo]:
 
     return headers
 
-
 def build_header_blocks(dataframe: pd.DataFrame, headers: List[HeaderInfo]) -> List[HeaderBlock]:
     blocks: List[HeaderBlock] = []
     if not headers:
@@ -499,7 +379,6 @@ def build_header_blocks(dataframe: pd.DataFrame, headers: List[HeaderInfo]) -> L
         blocks.append(HeaderBlock(header=header, start_row=start, end_row=end))
 
     return blocks
-
 
 def score_business_sheet(df: pd.DataFrame) -> int:
     score = 0
@@ -521,7 +400,6 @@ def score_business_sheet(df: pd.DataFrame) -> int:
 
     return score
 
-
 def find_business_sheets(workbook: Dict[str, pd.DataFrame]) -> List[Tuple[str, pd.DataFrame]]:
     business_sheets = []
     threshold = 35
@@ -542,7 +420,6 @@ def find_business_sheets(workbook: Dict[str, pd.DataFrame]) -> List[Tuple[str, p
 
     return business_sheets
 
-
 def safe_numeric(value: Any) -> Optional[int]:
     if pd.isna(value):
         return None
@@ -553,7 +430,6 @@ def safe_numeric(value: Any) -> Optional[int]:
         return int(math.floor(val + 0.5))
     except Exception:
         return None
-
 
 def build_window_code(row: pd.Series, header: HeaderInfo) -> Optional[str]:
     if header.code_col is None:
@@ -585,7 +461,6 @@ def build_window_code(row: pd.Series, header: HeaderInfo) -> Optional[str]:
 
     return re.sub(r"\s+", " ", code).strip()
 
-
 def is_record_start(row: pd.Series, header: HeaderInfo) -> bool:
     try:
         code_parts = []
@@ -616,7 +491,6 @@ def is_record_start(row: pd.Series, header: HeaderInfo) -> bool:
     except Exception:
         return False
 
-
 def build_record_buffers(dataframe: pd.DataFrame, block: HeaderBlock) -> List[pd.DataFrame]:
     buffers: List[pd.DataFrame] = []
     current_rows = []
@@ -634,7 +508,6 @@ def build_record_buffers(dataframe: pd.DataFrame, block: HeaderBlock) -> List[pd
 
     return buffers
 
-
 def collect_numeric_from_buffer(buffer: pd.DataFrame, column_index: Optional[int]) -> Optional[int]:
     if column_index is None:
         return None
@@ -645,7 +518,6 @@ def collect_numeric_from_buffer(buffer: pd.DataFrame, column_index: Optional[int
         if val is not None:
             return val
     return None
-
 
 def collect_glass(buffer: pd.DataFrame, header: HeaderInfo) -> Optional[str]:
     parts = []
@@ -678,7 +550,6 @@ def collect_glass(buffer: pd.DataFrame, header: HeaderInfo) -> Optional[str]:
                     return cell_str
 
     return None
-
 
 def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file: str, sheet_name: str) -> List[GlassRecord]:
     records: List[GlassRecord] = []
@@ -717,7 +588,6 @@ def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file:
 
     return records
 
-
 def parse_business_sheet(dataframe: pd.DataFrame, source_file: str, sheet_name: str) -> List[GlassRecord]:
     headers = find_header_blocks(dataframe)
     blocks = build_header_blocks(dataframe, headers)
@@ -727,7 +597,6 @@ def parse_business_sheet(dataframe: pd.DataFrame, source_file: str, sheet_name: 
         all_records.extend(parse_header_block(dataframe, block, source_file, sheet_name))
 
     return all_records
-
 
 def load_excel_with_calculated_values(file) -> Dict[str, pd.DataFrame]:
     file_bytes = io.BytesIO(file.read())
@@ -750,7 +619,6 @@ def load_excel_with_calculated_values(file) -> Dict[str, pd.DataFrame]:
         workbook_dict[sheet_name] = df
 
     return workbook_dict
-
 
 def process_uploaded_files(uploaded_files) -> pd.DataFrame:
     all_records = []
@@ -775,8 +643,7 @@ def process_uploaded_files(uploaded_files) -> pd.DataFrame:
 
     return pd.DataFrame([asdict(r) for r in all_records]).reset_index(drop=True) if all_records else pd.DataFrame()
 
-
-# STEP 1: FILE UPLOAD
+# File Uploader Controls
 st.markdown("<div class='step-title'>📁 Step 1: Upload BOQ Excel Files</div>", unsafe_allow_html=True)
 
 uploaded_files = st.file_uploader(
@@ -788,145 +655,81 @@ uploaded_files = st.file_uploader(
 )
 
 st.markdown("<br>", unsafe_allow_html=True)
-
 btn_col1, btn_col2, _ = st.columns([1, 1, 6])
 
 with btn_col1:
-    if st.button("🔗 Merge & Process Files", type="primary", use_container_width=False):
+    if st.button("Merge & Process Files", type="primary"):
         if uploaded_files:
-            with st.spinner("Extracting & Merging Records..."):
+            with st.spinner("Processing Files..."):
                 df_merged = process_uploaded_files(uploaded_files)
                 if not df_merged.empty:
                     st.session_state["merged_df"] = df_merged
-                    st.toast(f"Successfully Extracted {len(df_merged)} Non-Frosted Glass Records!", icon="✅")
+                    st.toast(f"Found {len(df_merged)} Glass Records!", icon="✅")
                 else:
-                    st.error("⚠️ No valid non-frosted glass records found.")
+                    st.error("No valid records found.")
         else:
-            st.warning("Please upload Excel file(s) first!")
+            st.warning("Please upload files first.")
 
 with btn_col2:
-    if st.button("🗑️ Reset Data", type="secondary", use_container_width=False):
+    if st.button("Reset Data", type="secondary"):
         for key in ["merged_df", "req_df_preview", "req_bytes", "req_generated", "generated_title_name"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.session_state["uploader_key"] += 1
         st.rerun()
 
-
-# MASTER GLASS RECORDS TABLE
+# Processing & Excel Export Logic
 if "merged_df" in st.session_state:
     df_merged = st.session_state["merged_df"]
 
     st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<div class='step-title'>📋 Extracted Glass Records (Frosted Excluded)</div>", unsafe_allow_html=True)
-
-    f_col1, f_col2 = st.columns([2, 2])
-    with f_col1:
-        search_query = st.text_input("🔍 Quick Search (Window Code / Glass Spec)", placeholder="Type to filter...")
-    with f_col2:
-        glass_types = ["ALL"] + sorted(list(df_merged["GlassType"].unique()))
-        selected_glass = st.selectbox("Filter by Glass Spec", glass_types)
-
-    filtered_df = df_merged.copy()
-    if search_query:
-        filtered_df = filtered_df[
-            filtered_df["WindowCode"].str.contains(search_query, case=False, na=False) |
-            filtered_df["GlassType"].str.contains(search_query, case=False, na=False)
-        ]
-    if selected_glass != "ALL":
-        filtered_df = filtered_df[filtered_df["GlassType"] == selected_glass]
-
-    filtered_display_df = filtered_df.copy()
-    if "Sr. No." not in filtered_display_df.columns:
-        filtered_display_df.insert(0, "Sr. No.", range(1, len(filtered_display_df) + 1))
-
-    st.dataframe(filtered_display_df, use_container_width=True, height=280, hide_index=True)
-    st.caption(f"Showing {len(filtered_df)} of {len(df_merged)} extracted non-frosted records")
-
-    # STEP 2: REQUIREMENT GENERATION
-    st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("<div class='step-title'>⚡ Step 2: Generate Official Requirement Sheet</div>", unsafe_allow_html=True)
 
-    if st.button("⚡ GENERATE REQUIREMENT SHEET (MEASUREMENTS)", type="primary", use_container_width=False):
-        with st.spinner("Calculating SQFT and generating Excel sheet..."):
-            df_req_preview = df_merged.copy()
-            df_req_preview["SQFT"] = ((df_req_preview["Width"] * df_req_preview["Height"]) / 92903.04).round(6)
-            df_req_preview["TTL SQFT"] = (df_req_preview["SQFT"] * df_req_preview["Qty"]).round(6)
-
-            df_req_preview.insert(0, "Sr.No", range(1, len(df_req_preview) + 1))
-            df_req_preview = df_req_preview.rename(
-                columns={
-                    "WindowCode": "WINDOW CODE",
-                    "Width": "WIDTH",
-                    "Height": "HEIGHT",
-                    "Qty": "QTY",
-                    "GlassType": "REMARKS",
-                }
-            )
-
-            preview_cols = ["Sr.No", "WINDOW CODE", "WIDTH", "HEIGHT", "SQFT", "QTY", "TTL SQFT", "REMARKS"]
-            df_req_preview = df_req_preview[preview_cols]
-            st.session_state["req_df_preview"] = df_req_preview
-
-            # OpenPyXL Sheet Processing
+    if st.button("⚡ GENERATE REQUIREMENT SHEET", type="primary"):
+        with st.spinner("Generating Exact Excel Sheet..."):
+            
+            # Excel Construction via OpenPyXL
             wb = openpyxl.Workbook()
             ws = wb.active
-            ws.title = "MEASUREMENTS"
+            ws.title = "Sheet1"
             ws.views.sheetView[0].showGridLines = True
 
-            # FONT STYLES (EXACT SIZE 16 FOR TITLE)
+            # EXACT STYLES
             title_font = Font(name="Calibri", size=16, bold=True, color="000000")
-            header_font = Font(name="Calibri", size=12, bold=True, color="FFFFFF")
-            data_font = Font(name="Calibri", size=11)
-            total_font = Font(name="Calibri", size=12, bold=True)
+            header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
+            data_font = Font(name="Calibri", size=11, bold=False, color="000000")
+            total_font = Font(name="Calibri", size=11, bold=True, color="000000")
 
-            header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
-            title_fill = PatternFill(start_color="DCE6F1", end_color="DCE6F1", fill_type="solid")
-            total_fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
-
-            glass_color_palette = [
-                "E2EFDA", "FFF2CC", "DDEBF7", "FCE4D6",
-                "E8D8F8", "F8CECC", "E1F5FE", "FFF3E0"
-            ]
-            
-            unique_glasses = list(df_merged["GlassType"].unique())
-            glass_fill_map = {}
-            for g_idx, g_spec in enumerate(unique_glasses):
-                c_hex = glass_color_palette[g_idx % len(glass_color_palette)]
-                glass_fill_map[g_spec] = PatternFill(start_color=c_hex, end_color=c_hex, fill_type="solid")
+            title_fill = PatternFill(start_color="DDEBF7", end_color="DDEBF7", fill_type="solid") # Ice Blue
+            header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid") # Dark Blue
 
             thin_border = Border(
-                left=Side(style="thin", color="D9D9D9"),
-                right=Side(style="thin", color="D9D9D9"),
-                top=Side(style="thin", color="D9D9D9"),
-                bottom=Side(style="thin", color="D9D9D9"),
-            )
-            thick_top_double_bottom = Border(
+                left=Side(style="thin", color="000000"),
+                right=Side(style="thin", color="000000"),
                 top=Side(style="thin", color="000000"),
-                bottom=Side(style="double", color="000000"),
+                bottom=Side(style="thin", color="000000"),
             )
 
-            # AUTO CURRENT DATE FORMAT: 1 WIN-SQUARE 22 AUG 2026
+            # TITLE STRING (Dynamic Current Date e.g. 1 WIN-SQUARE 22 AUG 2026)
             today_str = datetime.now().strftime("%d %b %Y").upper()
             title_text = f"1 WIN-SQUARE {today_str}"
             st.session_state["generated_title_name"] = title_text
-            
-            # ROW 1: TITLE ROW (FORCE FONT SIZE 16 TO ALL MERGED CELLS)
+
+            # ROW 1: TITLE ROW
             ws.merge_cells("A1:H1")
-            ws.row_dimensions[1].height = 32  # Height expanded for 16pt font
-
-            for col_i in range(1, 9):
-                c_cell = ws.cell(row=1, column=col_i)
-                c_cell.font = title_font
-                c_cell.fill = title_fill
-                c_cell.border = thin_border
-
+            ws.row_dimensions[1].height = 28
             ws["A1"].value = title_text
+            ws["A1"].font = title_font
             ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
 
-            # ROW 2: HEADERS (FONT SIZE 12)
+            for col_i in range(1, 9):
+                cell = ws.cell(row=1, column=col_i)
+                cell.fill = title_fill
+                cell.border = thin_border
+
+            # ROW 2: HEADERS
             headers = ["Sr.No", "WINDOW CODE", "WIDTH", "HEIGHT", "SQFT", "QTY", "TTL SQFT", "REMARKS"]
-            ws.row_dimensions[2].height = 24
+            ws.row_dimensions[2].height = 22
             for col_i, h_text in enumerate(headers, 1):
                 cell = ws.cell(row=2, column=col_i, value=h_text)
                 cell.font = header_font
@@ -934,46 +737,60 @@ if "merged_df" in st.session_state:
                 cell.alignment = Alignment(horizontal="center", vertical="center")
                 cell.border = thin_border
 
-            # ROW 3+: DATA ROWS (FONT SIZE 11)
+            # DATA ROWS (ROW 3 ONWARDS)
             for idx, row in df_merged.iterrows():
                 r_idx = idx + 3
-                sqft_formula = f"=ROUND((C{r_idx}*D{r_idx})/92903.04, 6)"
+                sqft_formula = f"=ROUND((C{r_idx}*D{r_idx})/92903.04, 2)"
                 ttl_sqft_formula = f"=E{r_idx}*F{r_idx}"
 
                 row_data = [
-                    idx + 1, row["WindowCode"], row["Width"], row["Height"],
-                    sqft_formula, row["Qty"], ttl_sqft_formula, row["GlassType"],
+                    idx + 1,
+                    row["WindowCode"],
+                    row["Width"],
+                    row["Height"],
+                    sqft_formula,
+                    row["Qty"],
+                    ttl_sqft_formula,
+                    row["GlassType"],
                 ]
 
-                current_fill = glass_fill_map.get(row["GlassType"], PatternFill(fill_type=None))
+                ws.row_dimensions[r_idx].height = 20
 
                 for col_i, val in enumerate(row_data, 1):
                     cell = ws.cell(row=r_idx, column=col_i, value=val)
                     cell.font = data_font
                     cell.border = thin_border
-                    cell.fill = current_fill
 
-                    if col_i in [3, 4]:
+                    # Exact Formatting Match
+                    if col_i == 1:
+                        cell.alignment = Alignment(horizontal="center", vertical="center")
+                    elif col_i == 2:
+                        cell.alignment = Alignment(horizontal="center", vertical="center")
+                    elif col_i in [3, 4]:
                         cell.number_format = "0"
-                        cell.alignment = Alignment(horizontal="right", vertical="center")
+                        cell.alignment = Alignment(horizontal="center", vertical="center")
                     elif col_i == 5:
-                        cell.number_format = "0.000000"
-                        cell.alignment = Alignment(horizontal="right", vertical="center")
+                        cell.number_format = "0.00"
+                        cell.alignment = Alignment(horizontal="center", vertical="center")
                     elif col_i == 6:
                         cell.number_format = "0"
                         cell.alignment = Alignment(horizontal="center", vertical="center")
                     elif col_i == 7:
-                        cell.number_format = "0.000000"
-                        cell.alignment = Alignment(horizontal="right", vertical="center")
-                    elif col_i == 1:
+                        cell.number_format = "0.00"
                         cell.alignment = Alignment(horizontal="center", vertical="center")
-                    else:
-                        cell.alignment = Alignment(horizontal="left", vertical="center")
+                    elif col_i == 8:
+                        cell.alignment = Alignment(horizontal="center", vertical="center")
 
             # TOTAL ROW
             tot_row = len(df_merged) + 3
-            ws.cell(row=tot_row, column=5, value="TOTAL").font = total_font
-            ws.cell(row=tot_row, column=5).alignment = Alignment(horizontal="right", vertical="center")
+            ws.row_dimensions[tot_row].height = 22
+
+            for c in range(1, 9):
+                ws.cell(row=tot_row, column=c).border = thin_border
+
+            cell_tot = ws.cell(row=tot_row, column=5, value="TOTAL")
+            cell_tot.font = total_font
+            cell_tot.alignment = Alignment(horizontal="right", vertical="center")
 
             qty_sum = ws.cell(row=tot_row, column=6, value=f"=SUM(F3:F{tot_row-1})")
             qty_sum.font = total_font
@@ -982,130 +799,37 @@ if "merged_df" in st.session_state:
 
             ttl_sqft_sum = ws.cell(row=tot_row, column=7, value=f"=SUM(G3:G{tot_row-1})")
             ttl_sqft_sum.font = total_font
-            ttl_sqft_sum.number_format = "0.000000"
-            ttl_sqft_sum.alignment = Alignment(horizontal="right", vertical="center")
+            ttl_sqft_sum.number_format = "0.00"
+            ttl_sqft_sum.alignment = Alignment(horizontal="center", vertical="center")
 
-            for c in range(1, len(headers) + 1):
-                cell = ws.cell(row=tot_row, column=c)
-                cell.fill = total_fill
-                cell.border = thick_top_double_bottom
-
-            for col in ws.columns:
-                max_len = max(len(str(cell.value or "")) for cell in col)
-                col_letter = get_column_letter(col[0].column)
-                ws.column_dimensions[col_letter].width = max(max_len + 3, 14)
+            # Auto Column Width Adjustment
+            column_widths = {
+                'A': 8,   # Sr.No
+                'B': 16,  # WINDOW CODE
+                'C': 10,  # WIDTH
+                'D': 10,  # HEIGHT
+                'E': 10,  # SQFT
+                'F': 8,   # QTY
+                'G': 12,  # TTL SQFT
+                'H': 32   # REMARKS
+            }
+            for col_letter, width in column_widths.items():
+                ws.column_dimensions[col_letter].width = width
 
             output = io.BytesIO()
             wb.save(output)
             st.session_state["req_bytes"] = output.getvalue()
             st.session_state["req_generated"] = True
 
-    # Render KPI Cards & Live Preview
     if st.session_state.get("req_generated"):
         st.markdown("<br>", unsafe_allow_html=True)
+        st.success("✅ Exact Excel Sheet Ready For Download!")
         
-        req_df = st.session_state["req_df_preview"]
-        tot_items = len(req_df)
-        tot_qty = req_df["QTY"].sum()
-        tot_area = req_df["TTL SQFT"].sum().round(2)
-
-        k1, k2, k3 = st.columns(3)
-        with k1:
-            st.markdown(f"<div class='kpi-card-box'><div class='kpi-title-lbl'>TOTAL ITEMS</div><div class='kpi-val-lbl'>{tot_items}</div></div>", unsafe_allow_html=True)
-        with k2:
-            st.markdown(f"<div class='kpi-card-box'><div class='kpi-title-lbl'>TOTAL GLASS QUANTITY</div><div class='kpi-val-lbl'>{tot_qty} Pcs</div></div>", unsafe_allow_html=True)
-        with k3:
-            st.markdown(f"<div class='kpi-card-box'><div class='kpi-title-lbl'>TOTAL GLASS SQFT (NON-FROSTED)</div><div class='kpi-val-lbl'>{tot_area:,.2f} Sq.Ft</div></div>", unsafe_allow_html=True)
-    
-        st.markdown("<br>", unsafe_allow_html=True)
-
-        tab1, tab2, tab3 = st.tabs([
-            "📄 MEASUREMENTS Live Preview", 
-            "📊 OC Wise Summary (Glass SQFT)", 
-            "🧩 Glass Type Breakdown"
-        ])
-
-        with tab1:
-            st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
-
-        with tab2:
-            df_merged_copy = df_merged.copy()
-            df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
-
-            def clean_glass_name(text):
-                text = str(text).upper().strip()
-                text = re.sub(r"\s+", " ", text)
-                text = text.replace("TOUGHENED", "THGN").replace("TOUGHNED", "THGN")
-                return text
-
-            df_merged_copy["CleanGlassType"] = df_merged_copy["GlassType"].apply(clean_glass_name)
-
-            def make_glass_string(group):
-                summary = group.groupby("CleanGlassType")["Qty"].sum()
-                details = [
-                    f"{g_type} - {qty}" 
-                    for g_type, qty in summary.items() 
-                    if g_type != "NOT SPECIFIED"
-                ]
-                return ", ".join(details) if details else "-"
-
-            glass_details_series = (
-                df_merged_copy.groupby("SourceFile")
-                .apply(make_glass_string, include_groups=False)
-                .reset_index(name="GLASS DETAILS")
-            )
-
-            oc_summary = (
-                df_merged_copy.groupby("SourceFile", as_index=False)
-                .agg(
-                    Qty=("Qty", "sum"),
-                    Total_SQFT=("Total_SQFT", "sum")
-                )
-            )
-
-            oc_summary = pd.merge(oc_summary, glass_details_series, on="SourceFile")
-            oc_summary["Total_SQFT"] = oc_summary["Total_SQFT"].round(2)
-            
-            oc_summary.columns = ["SourceFile (OC Name)", "Qty (Pcs)", "Total Glass SQFT", "GLASS DETAILS"]
-            
-            if "Sr. No." not in oc_summary.columns:
-                oc_summary.insert(0, "Sr. No.", range(1, len(oc_summary) + 1))
-
-            st.dataframe(oc_summary, use_container_width=True, hide_index=True)
-
-        with tab3:
-            df_glass_copy = df_merged.copy()
-
-            def clean_glass_name(text):
-                text = str(text).upper().strip()
-                text = re.sub(r"\s+", " ", text)
-                text = text.replace("TOUGHNED", "TOUGHENED")
-                return text
-
-            df_glass_copy["CleanGlassType"] = df_glass_copy["GlassType"].apply(clean_glass_name)
-            df_glass_filtered = df_glass_copy[df_glass_copy["CleanGlassType"] != "NOT SPECIFIED"]
-
-            glass_breakdown = (
-                df_glass_filtered.groupby("CleanGlassType", as_index=False)["Qty"]
-                .sum()
-                .sort_values(by="Qty", ascending=False)
-            )
-
-            glass_breakdown.columns = ["GlassType", "Qty"]
-            glass_breakdown.insert(0, "Sr. No.", range(1, len(glass_breakdown) + 1))
-
-            st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
-
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.success("✅ Header Font Size 16pt आणि File Name दोन्ही फिक्स केले आहेत.")
-        
-        # EXACT FILE NAME MATCHING TITLE
         file_download_name = f"{st.session_state.get('generated_title_name', '1 WIN-SQUARE')}.xlsx"
 
         st.download_button(
-            label="📥 DOWNLOAD OFFICIAL REQUIREMENT SHEET (.XLSX)",
+            label=f"📥 DOWNLOAD ({file_download_name})",
             data=st.session_state["req_bytes"],
             file_name=file_download_name,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-            use_container_width=False
         )
