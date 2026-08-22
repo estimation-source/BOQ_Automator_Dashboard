@@ -5,6 +5,7 @@ import math
 import os
 import re
 import sys
+from datetime import datetime
 from dataclasses import asdict, dataclass, field
 from typing import Any, Dict, List, Optional, Tuple
 
@@ -895,13 +896,26 @@ if "merged_df" in st.session_state:
             ws.title = "MEASUREMENTS"
             ws.views.sheetView[0].showGridLines = True
 
-            title_font = Font(name="Calibri", size=12, bold=True)
-            header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
-            data_font = Font(name="Calibri", size=10)
-            total_font = Font(name="Calibri", size=11, bold=True)
+            # FONT STYLES (Requirement: Data 11pt, Header 12pt)
+            title_font = Font(name="Calibri", size=12, bold=True, color="000000")
+            header_font = Font(name="Calibri", size=12, bold=True, color="FFFFFF")
+            data_font = Font(name="Calibri", size=11)
+            total_font = Font(name="Calibri", size=12, bold=True)
 
             header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
+            title_fill = PatternFill(start_color="DCE6F1", end_color="DCE6F1", fill_type="solid")
             total_fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
+
+            # Soft Pastel colors for different Glass Types
+            glass_color_palette = [
+                "EBF1F5", "F2EFE9", "EAEFF2", "F4F1EA", 
+                "EEF4F2", "F3EFEF", "EFEFF5", "F2F5EB"
+            ]
+            unique_glasses = list(df_merged["GlassType"].unique())
+            glass_fill_map = {}
+            for g_idx, g_spec in enumerate(unique_glasses):
+                c_hex = glass_color_palette[g_idx % len(glass_color_palette)]
+                glass_fill_map[g_spec] = PatternFill(start_color=c_hex, end_color=c_hex, fill_type="solid")
 
             thin_border = Border(
                 left=Side(style="thin", color="D9D9D9"),
@@ -914,57 +928,81 @@ if "merged_df" in st.session_state:
                 bottom=Side(style="double", color="000000"),
             )
 
-            ws.cell(row=1, column=1, value="1 WIN-SQUARE").font = title_font
+            # ROW 1: MERGED HEADER WITH CURRENT AUTO DATE
+            today_str = datetime.now().strftime("%d %b %Y").upper()
+            title_text = f"1 WIN-SQUARE {today_str}"
+            
+            ws.merge_cells("A1:H1")
+            cell_a1 = ws["A1"]
+            cell_a1.value = title_text
+            cell_a1.font = title_font
+            cell_a1.alignment = Alignment(horizontal="center", vertical="center")
+            
+            for col_i in range(1, 9):
+                c_cell = ws.cell(row=1, column=col_i)
+                c_cell.fill = title_fill
+                c_cell.border = thin_border
 
+            # ROW 2: HEADERS
             headers = ["Sr.No", "WINDOW CODE", "WIDTH", "HEIGHT", "SQFT", "QTY", "TTL SQFT", "REMARKS"]
-            ws.append(headers)
-
-            for c in range(1, len(headers) + 1):
-                cell = ws.cell(row=2, column=c)
+            for col_i, h_text in enumerate(headers, 1):
+                cell = ws.cell(row=2, column=col_i, value=h_text)
                 cell.font = header_font
                 cell.fill = header_fill
-                cell.alignment = Alignment(horizontal="center" if c in [1, 6] else ("right" if c in [3, 4, 5, 7] else "left"))
+                cell.alignment = Alignment(horizontal="center", vertical="center")
+                cell.border = thin_border
 
+            # ROW 3+: DATA ROWS
             for idx, row in df_merged.iterrows():
                 r_idx = idx + 3
                 sqft_formula = f"=ROUND((C{r_idx}*D{r_idx})/92903.04, 6)"
                 ttl_sqft_formula = f"=E{r_idx}*F{r_idx}"
 
-                ws.append([
+                row_data = [
                     idx + 1, row["WindowCode"], row["Width"], row["Height"],
                     sqft_formula, row["Qty"], ttl_sqft_formula, row["GlassType"],
-                ])
+                ]
 
-                for c in range(1, len(headers) + 1):
-                    cell = ws.cell(row=r_idx, column=c)
+                # Current row fill according to Glass Spec
+                current_fill = glass_fill_map.get(row["GlassType"], PatternFill(fill_type=None))
+
+                for col_i, val in enumerate(row_data, 1):
+                    cell = ws.cell(row=r_idx, column=col_i, value=val)
                     cell.font = data_font
                     cell.border = thin_border
-                    if c in [3, 4]:
-                        cell.number_format = "0"
-                        cell.alignment = Alignment(horizontal="right")
-                    elif c == 5:
-                        cell.number_format = "0.000000"
-                        cell.alignment = Alignment(horizontal="right")
-                    elif c == 6:
-                        cell.number_format = "0"
-                        cell.alignment = Alignment(horizontal="center")
-                    elif c == 7:
-                        cell.number_format = "0.000000"
-                        cell.alignment = Alignment(horizontal="right")
+                    cell.fill = current_fill
 
+                    if col_i in [3, 4]:
+                        cell.number_format = "0"
+                        cell.alignment = Alignment(horizontal="right", vertical="center")
+                    elif col_i == 5:
+                        cell.number_format = "0.000000"
+                        cell.alignment = Alignment(horizontal="right", vertical="center")
+                    elif col_i == 6:
+                        cell.number_format = "0"
+                        cell.alignment = Alignment(horizontal="center", vertical="center")
+                    elif col_i == 7:
+                        cell.number_format = "0.000000"
+                        cell.alignment = Alignment(horizontal="right", vertical="center")
+                    elif col_i == 1:
+                        cell.alignment = Alignment(horizontal="center", vertical="center")
+                    else:
+                        cell.alignment = Alignment(horizontal="left", vertical="center")
+
+            # TOTAL ROW
             tot_row = len(df_merged) + 3
             ws.cell(row=tot_row, column=5, value="TOTAL").font = total_font
-            ws.cell(row=tot_row, column=5).alignment = Alignment(horizontal="right")
+            ws.cell(row=tot_row, column=5).alignment = Alignment(horizontal="right", vertical="center")
 
             qty_sum = ws.cell(row=tot_row, column=6, value=f"=SUM(F3:F{tot_row-1})")
             qty_sum.font = total_font
             qty_sum.number_format = "0"
-            qty_sum.alignment = Alignment(horizontal="center")
+            qty_sum.alignment = Alignment(horizontal="center", vertical="center")
 
             ttl_sqft_sum = ws.cell(row=tot_row, column=7, value=f"=SUM(G3:G{tot_row-1})")
             ttl_sqft_sum.font = total_font
             ttl_sqft_sum.number_format = "0.000000"
-            ttl_sqft_sum.alignment = Alignment(horizontal="right")
+            ttl_sqft_sum.alignment = Alignment(horizontal="right", vertical="center")
 
             for c in range(1, len(headers) + 1):
                 cell = ws.cell(row=tot_row, column=c)
@@ -1079,12 +1117,12 @@ if "merged_df" in st.session_state:
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.success("✅ Requirement Excel Sheet Ready! Formatted with Calibri typography, blue header styling, borders, MEASUREMENTS sheet & OC breakdown.")
+        st.success("✅ Requirement Excel Sheet Ready! Formatted with merged title header, dynamic date, glass variant row styling & 11pt/12pt typography.")
         
         st.download_button(
             label="📥 DOWNLOAD OFFICIAL REQUIREMENT SHEET (.XLSX)",
             data=st.session_state["req_bytes"],
-            file_name="REQUIREMENT_SHEET_MEASUREMENTS.xlsx",
+            file_name=f"REQUIREMENT_SHEET_MEASUREMENTS_{datetime.now().strftime('%d_%b_%Y')}.xlsx",
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
             use_container_width=False
         )
