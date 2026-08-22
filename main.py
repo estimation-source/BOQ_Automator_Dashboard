@@ -17,7 +17,7 @@ from PIL import Image
 import streamlit as st
 
 # ============================================================
-# 1. Streamlit Page Config
+# 1. Streamlit Page Config & Custom Styling (Original UI)
 # ============================================================
 st.set_page_config(
     page_title="WIN-SQUARE | Requirement Sheet Engine",
@@ -26,7 +26,7 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Sidebar Toggle CSS
+# Custom Styling (Restored Original Dashboard Look)
 st.markdown("""
     <style>
     header[data-testid="stHeader"] {
@@ -49,31 +49,12 @@ st.markdown("""
         box-shadow: 0px 3px 8px rgba(0,0,0,0.3) !important;
     }
 
-    button[data-testid="stSidebarCollapsedControl"] svg,
-    button[data-testid="stSidebarNavCollapseButton"] svg {
-        fill: white !important;
-        color: white !important;
-        width: 22px !important;
-        height: 22px !important;
-    }
-
     [data-testid="stStatusWidget"],
     #MainMenu, 
     footer {
         display: none !important;
         visibility: hidden !important;
     }
-    </style>
-""", unsafe_allow_html=True)
-
-if "uploader_key" not in st.session_state:
-    st.session_state["uploader_key"] = 0
-
-# UI Fonts & General CSS
-st.markdown(
-    """
-    <style>
-    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
@@ -87,67 +68,30 @@ st.markdown(
         max-width: 98%;
     }
 
-    [data-testid="stSidebar"] {
-        background-color: #f1f5f9;
-        border-right: 1px solid #e2e8f0;
-    }
-
     .hero-container {
         background: #ffffff;
-        border-radius: 16px;
-        padding: 24px 30px;
+        border-radius: 12px;
+        padding: 20px 24px;
         border: 1px solid #e2e8f0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        margin-bottom: 24px;
-        display: flex;
-        justify-content: space-between;
-        align-items: center;
+        margin-bottom: 20px;
     }
 
     .hero-title-text {
         font-size: 22px;
         font-weight: 800;
         color: #0f172a;
-        margin: 0;
     }
 
     .hero-sub-text {
         font-size: 13px;
         color: #64748b;
-        margin-top: 4px;
-    }
-
-    .step-title {
-        font-size: 16px;
-        font-weight: 700;
-        color: #1e293b;
-        margin-bottom: 12px;
-    }
-
-    div.stButton > button[kind="primary"] {
-        background-color: #2563eb !important;
-        color: #ffffff !important;
-        border-radius: 6px !important;
-        height: 38px !important;
-    }
-
-    div.stButton > button[kind="secondary"] {
-        background-color: #dc2626 !important;
-        color: #ffffff !important;
-        border-radius: 6px !important;
-        height: 38px !important;
-    }
-
-    div.stDownloadButton > button {
-        background-color: #059669 !important;
-        color: #ffffff !important;
-        border-radius: 6px !important;
-        height: 38px !important;
     }
     </style>
-    """,
-    unsafe_allow_html=True,
-)
+""", unsafe_allow_html=True)
+
+if "uploader_key" not in st.session_state:
+    st.session_state["uploader_key"] = 0
 
 def get_image_path(filename):
     if hasattr(sys, "_MEIPASS"):
@@ -166,21 +110,22 @@ with st.sidebar:
     
     st.markdown("---")
     st.markdown("<b>💡 Quick Guide</b>", unsafe_allow_html=True)
-    st.markdown("1. Upload BOQ Files.<br>2. Click Merge & Process.<br>3. Generate Requirement Sheet.<br>4. Download Exact Excel.", unsafe_allow_html=True)
+    st.markdown("1. BOQ Files अपलोड करा.<br>2. Merge & Process क्लिक करा.<br>3. Exact Excel Requirement Sheet मिळवा.", unsafe_allow_html=True)
 
-# Main Banner
+# Main Banner Dashboard
 st.markdown(
     """
     <div class="hero-container">
-        <div>
-            <div class="hero-title-text">Requirement Sheet Engine</div>
-            <div class="hero-sub-text">BOQ Processing & Exact Sheet Generation</div>
-        </div>
+        <div class="hero-title-text">Requirement Sheet Engine</div>
+        <div class="hero-sub-text">Automated BOQ Processing & Exact Glass Formatting</div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
+# ============================================================
+# 2. Parsing Logic & Business Calculations
+# ============================================================
 HEADER_SCAN_LIMIT = 200
 HEADER_REMOVE_PATTERN = r"[^A-Z0-9]"
 
@@ -643,65 +588,74 @@ def process_uploaded_files(uploaded_files) -> pd.DataFrame:
 
     return pd.DataFrame([asdict(r) for r in all_records]).reset_index(drop=True) if all_records else pd.DataFrame()
 
-# File Uploader Controls
-st.markdown("<div class='step-title'>📁 Step 1: Upload BOQ Excel Files</div>", unsafe_allow_html=True)
-
+# ============================================================
+# 3. Main Dashboard UI Operations
+# ============================================================
 uploaded_files = st.file_uploader(
     "Upload BOQ Excel Files",
     type=["xlsx", "xlsm", "xls"],
     accept_multiple_files=True,
-    label_visibility="collapsed",
     key=f"boq_uploader_{st.session_state['uploader_key']}"
 )
 
-st.markdown("<br>", unsafe_allow_html=True)
-btn_col1, btn_col2, _ = st.columns([1, 1, 6])
+col_btn1, col_btn2, _ = st.columns([1.5, 1.5, 7])
 
-with btn_col1:
+with col_btn1:
     if st.button("Merge & Process Files", type="primary"):
         if uploaded_files:
-            with st.spinner("Processing Files..."):
+            with st.spinner("Processing BOQ Files..."):
                 df_merged = process_uploaded_files(uploaded_files)
                 if not df_merged.empty:
                     st.session_state["merged_df"] = df_merged
-                    st.toast(f"Found {len(df_merged)} Glass Records!", icon="✅")
+                    st.toast(f"Successfully processed {len(df_merged)} items!", icon="✅")
                 else:
-                    st.error("No valid records found.")
+                    st.error("No valid BOQ records found.")
         else:
             st.warning("Please upload files first.")
 
-with btn_col2:
-    if st.button("Reset Data", type="secondary"):
-        for key in ["merged_df", "req_df_preview", "req_bytes", "req_generated", "generated_title_name"]:
+with col_btn2:
+    if st.button("Reset Data"):
+        for key in ["merged_df", "req_bytes", "req_generated"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.session_state["uploader_key"] += 1
         st.rerun()
 
-# Processing & Excel Export Logic
+# Display Merged Preview Dashboard
 if "merged_df" in st.session_state:
     df_merged = st.session_state["merged_df"]
 
-    st.markdown("<br>", unsafe_allow_html=True)
-    st.markdown("<div class='step-title'>⚡ Step 2: Generate Official Requirement Sheet</div>", unsafe_allow_html=True)
+    st.markdown("---")
+    st.markdown("### 📊 Extracted BOQ Summary")
+    
+    # Dashboard Metrics
+    m1, m2, m3 = st.columns(3)
+    m1.metric("Total Extracted Items", len(df_merged))
+    m2.metric("Total Quantity", df_merged["Qty"].sum() if "Qty" in df_merged else 0)
+    m3.metric("Glass Types", df_merged["GlassType"].nunique() if "GlassType" in df_merged else 0)
+
+    st.dataframe(df_merged, use_container_width=True)
+
+    st.markdown("---")
+    st.markdown("### ⚡ Generate Exact Excel Output Sheet")
 
     if st.button("⚡ GENERATE REQUIREMENT SHEET", type="primary"):
-        with st.spinner("Generating Exact Excel Sheet..."):
+        with st.spinner("Creating Native Clean Excel File..."):
             
-            # Excel Construction via OpenPyXL
+            # Exact Excel Generation using OpenPyXL
             wb = openpyxl.Workbook()
             ws = wb.active
             ws.title = "Sheet1"
             ws.views.sheetView[0].showGridLines = True
 
-            # EXACT STYLES
+            # EXACT STYLES FROM SCREENSHOT
             title_font = Font(name="Calibri", size=16, bold=True, color="000000")
             header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
             data_font = Font(name="Calibri", size=11, bold=False, color="000000")
             total_font = Font(name="Calibri", size=11, bold=True, color="000000")
 
-            title_fill = PatternFill(start_color="DDEBF7", end_color="DDEBF7", fill_type="solid") # Ice Blue
-            header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid") # Dark Blue
+            title_fill = PatternFill(start_color="DDEBF7", end_color="DDEBF7", fill_type="solid")
+            header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
 
             thin_border = Border(
                 left=Side(style="thin", color="000000"),
@@ -710,7 +664,7 @@ if "merged_df" in st.session_state:
                 bottom=Side(style="thin", color="000000"),
             )
 
-            # TITLE STRING (Dynamic Current Date e.g. 1 WIN-SQUARE 22 AUG 2026)
+            # Title
             today_str = datetime.now().strftime("%d %b %Y").upper()
             title_text = f"1 WIN-SQUARE {today_str}"
             st.session_state["generated_title_name"] = title_text
@@ -727,7 +681,7 @@ if "merged_df" in st.session_state:
                 cell.fill = title_fill
                 cell.border = thin_border
 
-            # ROW 2: HEADERS
+            # ROW 2: HEADER ROW
             headers = ["Sr.No", "WINDOW CODE", "WIDTH", "HEIGHT", "SQFT", "QTY", "TTL SQFT", "REMARKS"]
             ws.row_dimensions[2].height = 22
             for col_i, h_text in enumerate(headers, 1):
@@ -737,7 +691,7 @@ if "merged_df" in st.session_state:
                 cell.alignment = Alignment(horizontal="center", vertical="center")
                 cell.border = thin_border
 
-            # DATA ROWS (ROW 3 ONWARDS)
+            # DATA ROWS
             for idx, row in df_merged.iterrows():
                 r_idx = idx + 3
                 sqft_formula = f"=ROUND((C{r_idx}*D{r_idx})/92903.04, 2)"
@@ -761,24 +715,14 @@ if "merged_df" in st.session_state:
                     cell.font = data_font
                     cell.border = thin_border
 
-                    # Exact Formatting Match
-                    if col_i == 1:
+                    # Exact Cell Formats & Alignment
+                    if col_i in [1, 2, 8]:
                         cell.alignment = Alignment(horizontal="center", vertical="center")
-                    elif col_i == 2:
-                        cell.alignment = Alignment(horizontal="center", vertical="center")
-                    elif col_i in [3, 4]:
+                    elif col_i in [3, 4, 6]:
                         cell.number_format = "0"
                         cell.alignment = Alignment(horizontal="center", vertical="center")
-                    elif col_i == 5:
+                    elif col_i in [5, 7]:
                         cell.number_format = "0.00"
-                        cell.alignment = Alignment(horizontal="center", vertical="center")
-                    elif col_i == 6:
-                        cell.number_format = "0"
-                        cell.alignment = Alignment(horizontal="center", vertical="center")
-                    elif col_i == 7:
-                        cell.number_format = "0.00"
-                        cell.alignment = Alignment(horizontal="center", vertical="center")
-                    elif col_i == 8:
                         cell.alignment = Alignment(horizontal="center", vertical="center")
 
             # TOTAL ROW
@@ -802,18 +746,9 @@ if "merged_df" in st.session_state:
             ttl_sqft_sum.number_format = "0.00"
             ttl_sqft_sum.alignment = Alignment(horizontal="center", vertical="center")
 
-            # Auto Column Width Adjustment
-            column_widths = {
-                'A': 8,   # Sr.No
-                'B': 16,  # WINDOW CODE
-                'C': 10,  # WIDTH
-                'D': 10,  # HEIGHT
-                'E': 10,  # SQFT
-                'F': 8,   # QTY
-                'G': 12,  # TTL SQFT
-                'H': 32   # REMARKS
-            }
-            for col_letter, width in column_widths.items():
+            # Column Widths
+            col_widths = {'A': 8, 'B': 16, 'C': 10, 'D': 10, 'E': 10, 'F': 8, 'G': 12, 'H': 32}
+            for col_letter, width in col_widths.items():
                 ws.column_dimensions[col_letter].width = width
 
             output = io.BytesIO()
@@ -822,13 +757,9 @@ if "merged_df" in st.session_state:
             st.session_state["req_generated"] = True
 
     if st.session_state.get("req_generated"):
-        st.markdown("<br>", unsafe_allow_html=True)
-        st.success("✅ Exact Excel Sheet Ready For Download!")
-        
         file_download_name = f"{st.session_state.get('generated_title_name', '1 WIN-SQUARE')}.xlsx"
-
         st.download_button(
-            label=f"📥 DOWNLOAD ({file_download_name})",
+            label=f"📥 Download Exact Excel ({file_download_name})",
             data=st.session_state["req_bytes"],
             file_name=file_download_name,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
