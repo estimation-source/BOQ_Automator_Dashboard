@@ -170,7 +170,6 @@ st.markdown(
         margin-top: 6px;
     }
 
-    /* PRIMARY BLUE BUTTON */
     div.stButton > button[kind="primary"] {
         background-color: #2563eb !important;
         background: #2563eb !important;
@@ -186,7 +185,6 @@ st.markdown(
         background: #1d4ed8 !important;
     }
 
-    /* SECONDARY RED BUTTON */
     div.stButton > button[kind="secondary"] {
         background-color: #dc2626 !important;
         background: #dc2626 !important;
@@ -202,7 +200,6 @@ st.markdown(
         background: #b91c1c !important;
     }
 
-    /* DOWNLOAD GREEN BUTTON */
     div.stDownloadButton > button {
         background-color: #059669 !important;
         background: #059669 !important;
@@ -254,9 +251,7 @@ def get_image_path(filename):
     return os.path.join(os.path.abspath("."), filename)
 
 
-# =========================================================
-# SIDEBAR
-# =========================================================
+# Sidebar
 with st.sidebar:
     logo_file = get_image_path("logo.png")
     if os.path.exists(logo_file):
@@ -281,9 +276,7 @@ with st.sidebar:
     )
 
 
-# =========================================================
-# HEADER HERO BANNER
-# =========================================================
+# Hero Banner
 st.markdown(
     """
     <div class="hero-container">
@@ -295,10 +288,6 @@ st.markdown(
     """,
     unsafe_allow_html=True,
 )
-
-# ============================================================
-# Global Engine Constants & Parsing Logic
-# ============================================================
 
 HEADER_SCAN_LIMIT = 200
 HEADER_REMOVE_PATTERN = r"[^A-Z0-9]"
@@ -763,9 +752,6 @@ def load_excel_with_calculated_values(file) -> Dict[str, pd.DataFrame]:
     return workbook_dict
 
 
-# ============================================================
-# PROCESS FILES
-# ============================================================
 def process_uploaded_files(uploaded_files) -> pd.DataFrame:
     all_records = []
 
@@ -790,9 +776,7 @@ def process_uploaded_files(uploaded_files) -> pd.DataFrame:
     return pd.DataFrame([asdict(r) for r in all_records]).reset_index(drop=True) if all_records else pd.DataFrame()
 
 
-# ============================================================
-# STEP 1: FILE UPLOAD SECTION
-# ============================================================
+# STEP 1: FILE UPLOAD
 st.markdown("<div class='step-title'>📁 Step 1: Upload BOQ Excel Files</div>", unsafe_allow_html=True)
 
 uploaded_files = st.file_uploader(
@@ -829,9 +813,7 @@ with btn_col2:
         st.rerun()
 
 
-# ============================================================
-# EXTRACTED MASTER GLASS RECORDS TABLE
-# ============================================================
+# MASTER GLASS RECORDS TABLE
 if "merged_df" in st.session_state:
     df_merged = st.session_state["merged_df"]
 
@@ -861,9 +843,7 @@ if "merged_df" in st.session_state:
     st.dataframe(filtered_display_df, use_container_width=True, height=280, hide_index=True)
     st.caption(f"Showing {len(filtered_df)} of {len(df_merged)} extracted non-frosted records")
 
-    # ============================================================
-    # STEP 2: REQUIREMENT GENERATION & KPI CARDS
-    # ============================================================
+    # STEP 2: REQUIREMENT GENERATION
     st.markdown("<br>", unsafe_allow_html=True)
     st.markdown("<div class='step-title'>⚡ Step 2: Generate Official Requirement Sheet</div>", unsafe_allow_html=True)
 
@@ -894,12 +874,7 @@ if "merged_df" in st.session_state:
             ws.title = "MEASUREMENTS"
             ws.views.sheetView[0].showGridLines = True
 
-            # -------------------------------------------------------------
-            # EXACT FONT SIZE CONFIGURATION:
-            # 1. Main Title Header (Row 1): SIZE 16
-            # 2. Table Column Headers (Row 2): SIZE 12
-            # 3. Data Rows: SIZE 11
-            # -------------------------------------------------------------
+            # FONT STYLES (EXACT SIZE 16 FOR TITLE)
             title_font = Font(name="Calibri", size=16, bold=True, color="000000")
             header_font = Font(name="Calibri", size=12, bold=True, color="FFFFFF")
             data_font = Font(name="Calibri", size=11)
@@ -909,16 +884,9 @@ if "merged_df" in st.session_state:
             title_fill = PatternFill(start_color="DCE6F1", end_color="DCE6F1", fill_type="solid")
             total_fill = PatternFill(start_color="F2F2F2", end_color="F2F2F2", fill_type="solid")
 
-            # DISTINCT PASTEL COLORS FOR DIFFERENT GLASS TYPES
             glass_color_palette = [
-                "E2EFDA",  # Light Mint Green
-                "FFF2CC",  # Soft Cream Yellow
-                "DDEBF7",  # Sky Blue
-                "FCE4D6",  # Light Peach
-                "E8D8F8",  # Lavender
-                "F8CECC",  # Soft Pink
-                "E1F5FE",  # Ice Blue
-                "FFF3E0"   # Pastel Orange
+                "E2EFDA", "FFF2CC", "DDEBF7", "FCE4D6",
+                "E8D8F8", "F8CECC", "E1F5FE", "FFF3E0"
             ]
             
             unique_glasses = list(df_merged["GlassType"].unique())
@@ -938,23 +906,23 @@ if "merged_df" in st.session_state:
                 bottom=Side(style="double", color="000000"),
             )
 
-            # AUTO CURRENT DATE GENERATION LOGIC (Format: DD MMM YYYY)
+            # AUTO CURRENT DATE FORMAT: 1 WIN-SQUARE 22 AUG 2026
             today_str = datetime.now().strftime("%d %b %Y").upper()
             title_text = f"1 WIN-SQUARE {today_str}"
             st.session_state["generated_title_name"] = title_text
             
-            # ROW 1: TITLE ROW (FONT SIZE 16)
+            # ROW 1: TITLE ROW (FORCE FONT SIZE 16 TO ALL MERGED CELLS)
             ws.merge_cells("A1:H1")
-            ws.row_dimensions[1].height = 28  # Row Height adjust for 16pt font
-            cell_a1 = ws["A1"]
-            cell_a1.value = title_text
-            cell_a1.font = title_font
-            cell_a1.alignment = Alignment(horizontal="center", vertical="center")
-            
+            ws.row_dimensions[1].height = 32  # Height expanded for 16pt font
+
             for col_i in range(1, 9):
                 c_cell = ws.cell(row=1, column=col_i)
+                c_cell.font = title_font
                 c_cell.fill = title_fill
                 c_cell.border = thin_border
+
+            ws["A1"].value = title_text
+            ws["A1"].alignment = Alignment(horizontal="center", vertical="center")
 
             # ROW 2: HEADERS (FONT SIZE 12)
             headers = ["Sr.No", "WINDOW CODE", "WIDTH", "HEIGHT", "SQFT", "QTY", "TTL SQFT", "REMARKS"]
@@ -1129,9 +1097,9 @@ if "merged_df" in st.session_state:
             st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
-        st.success("✅ Requirement Excel Sheet Ready! Header Font Size 16pt & File Name matches screenshot.")
+        st.success("✅ Header Font Size 16pt आणि File Name दोन्ही फिक्स केले आहेत.")
         
-        # EXACT FILE NAME GENERATION
+        # EXACT FILE NAME MATCHING TITLE
         file_download_name = f"{st.session_state.get('generated_title_name', '1 WIN-SQUARE')}.xlsx"
 
         st.download_button(
