@@ -17,7 +17,7 @@ from PIL import Image
 import streamlit as st
 
 # ============================================================
-# 1. Streamlit Page Config & Custom Styling (Original UI)
+# 1. Streamlit Page Config
 # ============================================================
 st.set_page_config(
     page_title="WIN-SQUARE | Requirement Sheet Engine",
@@ -26,7 +26,9 @@ st.set_page_config(
     initial_sidebar_state="expanded"
 )
 
-# Custom Styling (Restored Original Dashboard Look)
+# ============================================================
+# 2. FIX CSS: Header चालू ठेवून Sidebar Toggle Button Visible ठेवणे
+# ============================================================
 st.markdown("""
     <style>
     header[data-testid="stHeader"] {
@@ -49,12 +51,34 @@ st.markdown("""
         box-shadow: 0px 3px 8px rgba(0,0,0,0.3) !important;
     }
 
+    button[data-testid="stSidebarCollapsedControl"] svg,
+    button[data-testid="stSidebarNavCollapseButton"] svg {
+        fill: white !important;
+        color: white !important;
+        width: 22px !important;
+        height: 22px !important;
+    }
+
     [data-testid="stStatusWidget"],
     #MainMenu, 
     footer {
         display: none !important;
         visibility: hidden !important;
     }
+    </style>
+""", unsafe_allow_html=True)
+
+# State Management
+if "uploader_key" not in st.session_state:
+    st.session_state["uploader_key"] = 0
+
+# ============================================================
+# 3. UI Layout & Fonts CSS
+# ============================================================
+st.markdown(
+    """
+    <style>
+    @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
     
     html, body, [class*="css"] {
         font-family: 'Inter', sans-serif;
@@ -68,37 +92,170 @@ st.markdown("""
         max-width: 98%;
     }
 
+    [data-testid="stSidebar"] {
+        background-color: #f1f5f9;
+        border-right: 1px solid #e2e8f0;
+    }
+    
+    .quick-guide-title {
+        font-size: 15px;
+        font-weight: 700;
+        color: #0f172a;
+        margin-top: 15px;
+        margin-bottom: 12px;
+    }
+    
+    .quick-guide-step {
+        font-size: 13px;
+        color: #475569;
+        margin-bottom: 10px;
+        line-height: 1.4;
+    }
+
     .hero-container {
         background: #ffffff;
-        border-radius: 12px;
-        padding: 20px 24px;
+        border-radius: 16px;
+        padding: 24px 30px;
         border: 1px solid #e2e8f0;
         box-shadow: 0 2px 4px rgba(0,0,0,0.02);
-        margin-bottom: 20px;
+        margin-bottom: 24px;
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
     }
 
     .hero-title-text {
         font-size: 22px;
         font-weight: 800;
         color: #0f172a;
+        margin: 0;
     }
 
     .hero-sub-text {
         font-size: 13px;
         color: #64748b;
+        margin-top: 4px;
+    }
+
+    .step-title {
+        font-size: 16px;
+        font-weight: 700;
+        color: #1e293b;
+        margin-bottom: 12px;
+        display: flex;
+        align-items: center;
+        gap: 8px;
+    }
+
+    .kpi-card-box {
+        background: #ffffff;
+        border: 1px solid #e2e8f0;
+        border-radius: 10px;
+        padding: 16px 20px;
+        box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+    }
+
+    .kpi-title-lbl {
+        font-size: 11px;
+        font-weight: 700;
+        color: #64748b;
+        text-transform: uppercase;
+        letter-spacing: 0.5px;
+    }
+
+    .kpi-val-lbl {
+        font-size: 24px;
+        font-weight: 800;
+        color: #0f172a;
+        margin-top: 6px;
+    }
+
+    /* PRIMARY BLUE BUTTON - COMPACT & NORMAL FONT WEIGHT */
+    div.stButton > button[kind="primary"] {
+        background-color: #2563eb !important;
+        background: #2563eb !important;
+        border: 1px solid #2563eb !important;
+        color: #ffffff !important;
+        border-radius: 6px !important;
+        height: 38px !important;
+        padding: 0 16px !important;
+        box-shadow: 0 1px 2px rgba(37, 99, 235, 0.2) !important;
+    }
+    div.stButton > button[kind="primary"]:hover {
+        background-color: #1d4ed8 !important;
+        background: #1d4ed8 !important;
+    }
+
+    /* SECONDARY RED BUTTON - COMPACT & NORMAL FONT WEIGHT */
+    div.stButton > button[kind="secondary"] {
+        background-color: #dc2626 !important;
+        background: #dc2626 !important;
+        border: 1px solid #dc2626 !important;
+        color: #ffffff !important;
+        border-radius: 6px !important;
+        height: 38px !important;
+        padding: 0 16px !important;
+        box-shadow: 0 1px 2px rgba(220, 38, 38, 0.2) !important;
+    }
+    div.stButton > button[kind="secondary"]:hover {
+        background-color: #b91c1c !important;
+        background: #b91c1c !important;
+    }
+
+    /* DOWNLOAD GREEN BUTTON - COMPACT & NORMAL FONT WEIGHT */
+    div.stDownloadButton > button {
+        background-color: #059669 !important;
+        background: #059669 !important;
+        border: 1px solid #059669 !important;
+        color: #ffffff !important;
+        border-radius: 6px !important;
+        height: 38px !important;
+        padding: 0 16px !important;
+        box-shadow: 0 1px 2px rgba(5, 150, 105, 0.2) !important;
+    }
+    div.stDownloadButton > button:hover {
+        background-color: #047857 !important;
+        background: #047857 !important;
+    }
+
+    /* FORCE NORMAL WEIGHT (NOT BOLD) & WHITE TEXT */
+    div.stButton > button p, div.stButton > button span,
+    div.stDownloadButton > button p, div.stDownloadButton > button span {
+        color: #ffffff !important;
+        font-weight: 500 !important;
+        font-size: 13px !important;
+    }
+
+    .stTabs [data-baseweb="tab-list"] {
+        gap: 16px;
+        border-bottom: 1px solid #e2e8f0;
+    }
+
+    .stTabs [data-baseweb="tab"] {
+        height: 40px;
+        white-space: pre;
+        font-size: 13px;
+        font-weight: 600;
+        color: #64748b;
+    }
+
+    .stTabs [aria-selected="true"] {
+        color: #2563eb !important;
+        border-bottom: 2px solid #2563eb !important;
     }
     </style>
-""", unsafe_allow_html=True)
-
-if "uploader_key" not in st.session_state:
-    st.session_state["uploader_key"] = 0
+    """,
+    unsafe_allow_html=True,
+)
 
 def get_image_path(filename):
     if hasattr(sys, "_MEIPASS"):
         return os.path.join(sys._MEIPASS, filename)
     return os.path.join(os.path.abspath("."), filename)
 
-# Sidebar
+# =========================================================
+# SIDEBAR
+# =========================================================
 with st.sidebar:
     logo_file = get_image_path("logo.png")
     if os.path.exists(logo_file):
@@ -106,26 +263,41 @@ with st.sidebar:
         with col_s2:
             st.image(Image.open(logo_file), width=110)
     else:
-        st.markdown("<h2 style='text-align: center; color:#1e293b;'><b>WIN-SQUARE</b></h2>", unsafe_allow_html=True)
+        st.markdown("<h2 style='text-align: center; color:#1e293b;'><b>win square</b></h2>", unsafe_allow_html=True)
     
     st.markdown("---")
-    st.markdown("<b>💡 Quick Guide</b>", unsafe_allow_html=True)
-    st.markdown("1. BOQ Files अपलोड करा.<br>2. Merge & Process क्लिक करा.<br>3. Exact Excel Requirement Sheet मिळवा.", unsafe_allow_html=True)
+    st.markdown("<div class='quick-guide-title'>💡 Quick Guide</div>", unsafe_allow_html=True)
+    st.markdown(
+        """
+        <div class='quick-guide-step'><b>1.</b> Upload multi-sheet Excel BOQ files.</div>
+        <div class='quick-guide-step'><b>2.</b> Click on <b>Merge & Process Files</b>.</div>
+        <div class='quick-guide-step'><b>3.</b> Review merged glass records.</div>
+        <div class='quick-guide-step'><b>4.</b> Click <b>Generate Requirement Sheet (MEASUREMENTS)</b>.</div>
+        <div class='quick-guide-step'><b>5.</b> Download styled Excel with auto formulas & OC breakdown.</div>
+        <div class='quick-guide-step'><b>6.</b> Use <b>Reset Data</b> to clear current workspace.</div>
+        """,
+        unsafe_allow_html=True
+    )
 
-# Main Banner Dashboard
+# =========================================================
+# HEADER HERO BANNER
+# =========================================================
 st.markdown(
     """
     <div class="hero-container">
-        <div class="hero-title-text">Requirement Sheet Engine</div>
-        <div class="hero-sub-text">Automated BOQ Processing & Exact Glass Formatting</div>
+        <div>
+            <div class="hero-title-text">Requirement Sheet Engine</div>
+            <div class="hero-sub-text">Enterprise BOQ Extraction, File Merger & Automatic Measurement Generator</div>
+        </div>
     </div>
     """,
     unsafe_allow_html=True,
 )
 
 # ============================================================
-# 2. Parsing Logic & Business Calculations
+# Global Engine Constants & Parsing Logic (GLASS SPECIFIC)
 # ============================================================
+
 HEADER_SCAN_LIMIT = 200
 HEADER_REMOVE_PATTERN = r"[^A-Z0-9]"
 
@@ -514,6 +686,7 @@ def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file:
         if qty is None:
             qty = 1
 
+        # FROSTED GLASS ignore करणे
         if glass_raw and "FROSTED" in str(glass_raw).upper():
             continue
 
@@ -565,6 +738,9 @@ def load_excel_with_calculated_values(file) -> Dict[str, pd.DataFrame]:
 
     return workbook_dict
 
+# ============================================================
+# PROCESS FILES
+# ============================================================
 def process_uploaded_files(uploaded_files) -> pd.DataFrame:
     all_records = []
 
@@ -589,66 +765,111 @@ def process_uploaded_files(uploaded_files) -> pd.DataFrame:
     return pd.DataFrame([asdict(r) for r in all_records]).reset_index(drop=True) if all_records else pd.DataFrame()
 
 # ============================================================
-# 3. Main Dashboard UI Operations
+# STEP 1: FILE UPLOAD SECTION
 # ============================================================
+st.markdown("<div class='step-title'>📁 Step 1: Upload BOQ Excel Files</div>", unsafe_allow_html=True)
+
 uploaded_files = st.file_uploader(
     "Upload BOQ Excel Files",
     type=["xlsx", "xlsm", "xls"],
     accept_multiple_files=True,
+    label_visibility="collapsed",
     key=f"boq_uploader_{st.session_state['uploader_key']}"
 )
 
-col_btn1, col_btn2, _ = st.columns([1.5, 1.5, 7])
+st.markdown("<br>", unsafe_allow_html=True)
 
-with col_btn1:
-    if st.button("Merge & Process Files", type="primary"):
+btn_col1, btn_col2, _ = st.columns([1, 1, 6])
+
+with btn_col1:
+    if st.button("Merge & Process Files", type="primary", use_container_width=False):
         if uploaded_files:
-            with st.spinner("Processing BOQ Files..."):
+            with st.spinner("Extracting & Merging Records..."):
                 df_merged = process_uploaded_files(uploaded_files)
                 if not df_merged.empty:
                     st.session_state["merged_df"] = df_merged
-                    st.toast(f"Successfully processed {len(df_merged)} items!", icon="✅")
+                    st.toast(f"Successfully Extracted {len(df_merged)} Non-Frosted Glass Records!", icon="✅")
                 else:
-                    st.error("No valid BOQ records found.")
+                    st.error("⚠️ No valid non-frosted glass records found.")
         else:
-            st.warning("Please upload files first.")
+            st.warning("Please upload Excel file(s) first!")
 
-with col_btn2:
-    if st.button("Reset Data"):
-        for key in ["merged_df", "req_bytes", "req_generated"]:
+with btn_col2:
+    if st.button("Reset Data", type="secondary", use_container_width=False):
+        for key in ["merged_df", "req_df_preview", "req_bytes", "req_generated"]:
             if key in st.session_state:
                 del st.session_state[key]
         st.session_state["uploader_key"] += 1
         st.rerun()
 
-# Display Merged Preview Dashboard
+# ============================================================
+# EXTRACTED MASTER GLASS RECORDS TABLE
+# ============================================================
 if "merged_df" in st.session_state:
     df_merged = st.session_state["merged_df"]
 
-    st.markdown("---")
-    st.markdown("### 📊 Extracted BOQ Summary")
-    
-    # Dashboard Metrics
-    m1, m2, m3 = st.columns(3)
-    m1.metric("Total Extracted Items", len(df_merged))
-    m2.metric("Total Quantity", df_merged["Qty"].sum() if "Qty" in df_merged else 0)
-    m3.metric("Glass Types", df_merged["GlassType"].nunique() if "GlassType" in df_merged else 0)
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<div class='step-title'>📋 Extracted Glass Records (Frosted Excluded)</div>", unsafe_allow_html=True)
 
-    st.dataframe(df_merged, use_container_width=True)
+    f_col1, f_col2 = st.columns([2, 2])
+    with f_col1:
+        search_query = st.text_input("🔍 Quick Search (Window Code / Glass Spec)", placeholder="Type to filter...")
+    with f_col2:
+        glass_types = ["ALL"] + sorted(list(df_merged["GlassType"].unique()))
+        selected_glass = st.selectbox("Filter by Glass Spec", glass_types)
 
-    st.markdown("---")
-    st.markdown("### ⚡ Generate Exact Excel Output Sheet")
+    filtered_df = df_merged.copy()
+    if search_query:
+        filtered_df = filtered_df[
+            filtered_df["WindowCode"].str.contains(search_query, case=False, na=False) |
+            filtered_df["GlassType"].str.contains(search_query, case=False, na=False)
+        ]
+    if selected_glass != "ALL":
+        filtered_df = filtered_df[filtered_df["GlassType"] == selected_glass]
 
-    if st.button("⚡ GENERATE REQUIREMENT SHEET", type="primary"):
-        with st.spinner("Creating Native Clean Excel File..."):
+    filtered_display_df = filtered_df.copy()
+    if "Sr. No." not in filtered_display_df.columns:
+        filtered_display_df.insert(0, "Sr. No.", range(1, len(filtered_display_df) + 1))
+
+    st.dataframe(filtered_display_df, use_container_width=True, height=280, hide_index=True)
+    st.caption(f"Showing {len(filtered_df)} of {len(df_merged)} extracted non-frosted records")
+
+    # ============================================================
+    # STEP 2: REQUIREMENT GENERATION & KPI CARDS
+    # ============================================================
+    st.markdown("<br>", unsafe_allow_html=True)
+    st.markdown("<div class='step-title'>⚡ Step 2: Generate Official Requirement Sheet</div>", unsafe_allow_html=True)
+
+    if st.button("⚡ GENERATE REQUIREMENT SHEET (MEASUREMENTS)", type="primary", use_container_width=False):
+        with st.spinner("Calculating SQFT and generating Excel sheet..."):
             
-            # Exact Excel Generation using OpenPyXL
+            # Dashboard Live Preview Preparation
+            df_req_preview = df_merged.copy()
+            df_req_preview["SQFT"] = ((df_req_preview["Width"] * df_req_preview["Height"]) / 92903.04).round(2)
+            df_req_preview["TTL SQFT"] = (df_req_preview["SQFT"] * df_req_preview["Qty"]).round(2)
+
+            df_req_preview.insert(0, "Sr.No", range(1, len(df_req_preview) + 1))
+            df_req_preview = df_req_preview.rename(
+                columns={
+                    "WindowCode": "WINDOW CODE",
+                    "Width": "WIDTH",
+                    "Height": "HEIGHT",
+                    "Qty": "QTY",
+                    "GlassType": "REMARKS",
+                }
+            )
+
+            preview_cols = ["Sr.No", "WINDOW CODE", "WIDTH", "HEIGHT", "SQFT", "QTY", "TTL SQFT", "REMARKS"]
+            df_req_preview = df_req_preview[preview_cols]
+            st.session_state["req_df_preview"] = df_req_preview
+
+            # OpenPyXL Exact Excel Generation Logic
             wb = openpyxl.Workbook()
             ws = wb.active
             ws.title = "Sheet1"
             ws.views.sheetView[0].showGridLines = True
 
-            # EXACT STYLES FROM SCREENSHOT
+            # EXACT STYLES
             title_font = Font(name="Calibri", size=16, bold=True, color="000000")
             header_font = Font(name="Calibri", size=11, bold=True, color="FFFFFF")
             data_font = Font(name="Calibri", size=11, bold=False, color="000000")
@@ -664,12 +885,11 @@ if "merged_df" in st.session_state:
                 bottom=Side(style="thin", color="000000"),
             )
 
-            # Title
+            # TITLE ROW
             today_str = datetime.now().strftime("%d %b %Y").upper()
             title_text = f"1 WIN-SQUARE {today_str}"
             st.session_state["generated_title_name"] = title_text
 
-            # ROW 1: TITLE ROW
             ws.merge_cells("A1:H1")
             ws.row_dimensions[1].height = 28
             ws["A1"].value = title_text
@@ -681,7 +901,7 @@ if "merged_df" in st.session_state:
                 cell.fill = title_fill
                 cell.border = thin_border
 
-            # ROW 2: HEADER ROW
+            # HEADER ROW
             headers = ["Sr.No", "WINDOW CODE", "WIDTH", "HEIGHT", "SQFT", "QTY", "TTL SQFT", "REMARKS"]
             ws.row_dimensions[2].height = 22
             for col_i, h_text in enumerate(headers, 1):
@@ -715,7 +935,6 @@ if "merged_df" in st.session_state:
                     cell.font = data_font
                     cell.border = thin_border
 
-                    # Exact Cell Formats & Alignment
                     if col_i in [1, 2, 8]:
                         cell.alignment = Alignment(horizontal="center", vertical="center")
                     elif col_i in [3, 4, 6]:
@@ -756,11 +975,110 @@ if "merged_df" in st.session_state:
             st.session_state["req_bytes"] = output.getvalue()
             st.session_state["req_generated"] = True
 
+    # Render KPI Cards & Live Preview Tabs
     if st.session_state.get("req_generated"):
+        st.markdown("<br>", unsafe_allow_html=True)
+        
+        req_df = st.session_state["req_df_preview"]
+        tot_items = len(req_df)
+        tot_qty = req_df["QTY"].sum()
+        tot_area = req_df["TTL SQFT"].sum().round(2)
+
+        k1, k2, k3 = st.columns(3)
+        with k1:
+            st.markdown(f"<div class='kpi-card-box'><div class='kpi-title-lbl'>TOTAL ITEMS</div><div class='kpi-val-lbl'>{tot_items}</div></div>", unsafe_allow_html=True)
+        with k2:
+            st.markdown(f"<div class='kpi-card-box'><div class='kpi-title-lbl'>TOTAL GLASS QUANTITY</div><div class='kpi-val-lbl'>{tot_qty} Pcs</div></div>", unsafe_allow_html=True)
+        with k3:
+            st.markdown(f"<div class='kpi-card-box'><div class='kpi-title-lbl'>TOTAL GLASS SQFT (NON-FROSTED)</div><div class='kpi-val-lbl'>{tot_area:,.2f} Sq.Ft</div></div>", unsafe_allow_html=True)
+    
+        st.markdown("<br>", unsafe_allow_html=True)
+
+        tab1, tab2, tab3 = st.tabs([
+            "📄 MEASUREMENTS Live Preview", 
+            "📊 OC Wise Summary (Glass SQFT)", 
+            "🧩 Glass Type Breakdown"
+        ])
+
+        with tab1:
+            st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
+
+        with tab2:
+            df_merged_copy = df_merged.copy()
+            df_merged_copy["Total_SQFT"] = ((df_merged_copy["Width"] * df_merged_copy["Height"]) / 92903.04) * df_merged_copy["Qty"]
+
+            def clean_glass_name(text):
+                text = str(text).upper().strip()
+                text = re.sub(r"\s+", " ", text)
+                text = text.replace("TOUGHENED", "THGN").replace("TOUGHNED", "THGN")
+                return text
+
+            df_merged_copy["CleanGlassType"] = df_merged_copy["GlassType"].apply(clean_glass_name)
+
+            def make_glass_string(group):
+                summary = group.groupby("CleanGlassType")["Qty"].sum()
+                details = [
+                    f"{g_type} - {qty}" 
+                    for g_type, qty in summary.items() 
+                    if g_type != "NOT SPECIFIED"
+                ]
+                return ", ".join(details) if details else "-"
+
+            glass_details_series = (
+                df_merged_copy.groupby("SourceFile")
+                .apply(make_glass_string, include_groups=False)
+                .reset_index(name="GLASS DETAILS")
+            )
+
+            oc_summary = (
+                df_merged_copy.groupby("SourceFile", as_index=False)
+                .agg(
+                    Qty=("Qty", "sum"),
+                    Total_SQFT=("Total_SQFT", "sum")
+                )
+            )
+
+            oc_summary = pd.merge(oc_summary, glass_details_series, on="SourceFile")
+            oc_summary["Total_SQFT"] = oc_summary["Total_SQFT"].round(2)
+            
+            oc_summary.columns = ["SourceFile (OC Name)", "Qty (Pcs)", "Total Glass SQFT", "GLASS DETAILS"]
+            
+            if "Sr. No." not in oc_summary.columns:
+                oc_summary.insert(0, "Sr. No.", range(1, len(oc_summary) + 1))
+
+            st.dataframe(oc_summary, use_container_width=True, hide_index=True)
+
+        with tab3:
+            df_glass_copy = df_merged.copy()
+
+            def clean_glass_name(text):
+                text = str(text).upper().strip()
+                text = re.sub(r"\s+", " ", text)
+                text = text.replace("TOUGHNED", "TOUGHENED")
+                return text
+
+            df_glass_copy["CleanGlassType"] = df_glass_copy["GlassType"].apply(clean_glass_name)
+            df_glass_filtered = df_glass_copy[df_glass_copy["CleanGlassType"] != "NOT SPECIFIED"]
+
+            glass_breakdown = (
+                df_glass_filtered.groupby("CleanGlassType", as_index=False)["Qty"]
+                .sum()
+                .sort_values(by="Qty", ascending=False)
+            )
+
+            glass_breakdown.columns = ["GlassType", "Qty"]
+            glass_breakdown.insert(0, "Sr. No.", range(1, len(glass_breakdown) + 1))
+
+            st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
+
+        st.markdown("<br>", unsafe_allow_html=True)
+        st.success("✅ Requirement Excel Sheet Ready! Styled with Exact Header, Formulas & Centered Alignment.")
+        
         file_download_name = f"{st.session_state.get('generated_title_name', '1 WIN-SQUARE')}.xlsx"
         st.download_button(
-            label=f"📥 Download Exact Excel ({file_download_name})",
+            label=f"📥 DOWNLOAD OFFICIAL REQUIREMENT SHEET ({file_download_name})",
             data=st.session_state["req_bytes"],
             file_name=file_download_name,
             mime="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+            use_container_width=False
         )
