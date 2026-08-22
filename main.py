@@ -313,6 +313,38 @@ KEYWORDS = {
     "GLASS": [["GLASS"], ["DESP"]],
 }
 
+# Advanced Glass Color Mapping with Hex Code and CSS Style
+COLOR_PALETTE = [
+    "E2EFDA", "FFF2CC", "FCE4D6", "E7E6E6", "E1D5E7", 
+    "D9E1F2", "F8CBAD", "C6E0B4", "FFE699", "B4C6E7"
+]
+
+def get_glass_color_hex(glass_text: str) -> str:
+    text = str(glass_text).upper().strip()
+    if not text or text == "NOT SPECIFIED" or text == "NAN":
+        return "F2F2F2" # Soft Grey for undefined
+    
+    if "6MM" in text or "6 MM" in text:
+        return "E2EFDA" # Light Green
+    elif "8MM" in text or "8 MM" in text:
+        return "FFF2CC" # Light Yellow
+    elif "10MM" in text or "10 MM" in text:
+        return "FCE4D6" # Light Peach
+    elif "12MM" in text or "12 MM" in text:
+        return "E7E6E6" # Light Grey
+    elif "LAMI" in text or "LAMINATED" in text:
+        return "E1D5E7" # Light Purple
+    elif "DGU" in text:
+        return "D9E1F2" # Light Blue
+    elif "CLEAR" in text:
+        return "D9EAD3" # Soft Mint
+    elif "TINTED" in text or "REFLECTIVE" in text:
+        return "F8CBAD" # Light Bronze/Coral
+    else:
+        # Dynamic deterministic color mapping for custom glass specifications
+        hash_val = sum(ord(c) for c in text)
+        return COLOR_PALETTE[hash_val % len(COLOR_PALETTE)]
+
 def standardize_glass_spec(val: str) -> str:
     if pd.isna(val) or not str(val).strip():
         return "NOT SPECIFIED"
@@ -874,18 +906,6 @@ if "merged_df" in st.session_state:
             title_fill = PatternFill(start_color="DDEBF7", end_color="DDEBF7", fill_type="solid")
             header_fill = PatternFill(start_color="1F497D", end_color="1F497D", fill_type="solid")
 
-            # GLASS TYPE COLOR MAPPING (SOFT PASTEL SHADES)
-            GLASS_COLOR_MAP = {
-                "6MM": "E2EFDA",        # Soft Green
-                "8MM": "FFF2CC",        # Soft Yellow
-                "10MM": "FCE4D6",       # Soft Peach
-                "12MM": "E7E6E6",       # Soft Grey
-                "LAMINATED": "E1D5E7",  # Soft Purple
-                "DGU": "D9E1F2",        # Soft Blue
-                "NOT SPECIFIED": "F8CBAD" # Soft Coral/Orange
-            }
-            DEFAULT_ROW_FILL = PatternFill(start_color="FFFFFF", end_color="FFFFFF", fill_type="solid")
-
             thin_border = Border(
                 left=Side(style="thin", color="000000"),
                 right=Side(style="thin", color="000000"),
@@ -925,14 +945,10 @@ if "merged_df" in st.session_state:
                 sqft_formula = f"=ROUND((C{r_idx}*D{r_idx})/92903.04, 2)"
                 ttl_sqft_formula = f"=E{r_idx}*F{r_idx}"
 
-                glass_spec_str = str(row["GlassType"]).upper()
-                row_fill = DEFAULT_ROW_FILL
-
-                # Find Color Based on Glass Keywords
-                for key, hex_color in GLASS_COLOR_MAP.items():
-                    if key in glass_spec_str:
-                        row_fill = PatternFill(start_color=hex_color, end_color=hex_color, fill_type="solid")
-                        break
+                # Calculate Color dynamically based on GlassType
+                glass_type_str = str(row["GlassType"])
+                hex_color = get_glass_color_hex(glass_type_str)
+                row_fill = PatternFill(start_color=hex_color, end_color=hex_color, fill_type="solid")
 
                 row_data = [
                     idx + 1,
@@ -1019,7 +1035,14 @@ if "merged_df" in st.session_state:
         ])
 
         with tab1:
-            st.dataframe(req_df, use_container_width=True, height=350, hide_index=True)
+            # Color Styling on Streamlit DataFrame Preview as well
+            def style_row_by_glass(row):
+                glass_str = str(row["REMARKS"])
+                color = get_glass_color_hex(glass_str)
+                return [f'background-color: #{color}; color: #000000;'] * len(row)
+
+            styled_req_df = req_df.style.apply(style_row_by_glass, axis=1)
+            st.dataframe(styled_req_df, use_container_width=True, height=350, hide_index=True)
 
         with tab2:
             df_merged_copy = df_merged.copy()
@@ -1087,7 +1110,12 @@ if "merged_df" in st.session_state:
             glass_breakdown.columns = ["GlassType", "Qty"]
             glass_breakdown.insert(0, "Sr. No.", range(1, len(glass_breakdown) + 1))
 
-            st.dataframe(glass_breakdown, use_container_width=True, hide_index=True)
+            # Apply Color highlighting on Glass Breakdown Tab
+            def style_breakdown(row):
+                color = get_glass_color_hex(row["GlassType"])
+                return [f'background-color: #{color}; color: #000000;'] * len(row)
+
+            st.dataframe(glass_breakdown.style.apply(style_breakdown, axis=1), use_container_width=True, hide_index=True)
 
         st.markdown("<br>", unsafe_allow_html=True)
         st.success("✅ Requirement Excel Sheet Ready! Glass Types Color Coding Applied.")
