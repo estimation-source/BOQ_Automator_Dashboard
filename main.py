@@ -559,18 +559,25 @@ def build_window_code(row: pd.Series, header: HeaderInfo) -> Optional[str]:
     code = re.sub(r"\.0$", "", code)
     code = re.sub(r"\s+", " ", code).strip()
 
-    # शेजारचा (Next Column) सेल चेक करून डायरेक्ट जोडणे
+    # जर 2 कॉलम जोडायचे असतील (Concat Logic)
     if header.code_col + 1 < len(row):
         next_val = row.iloc[header.code_col + 1]
         if not pd.isna(next_val):
             next_str = str(next_val).strip()
             next_str = re.sub(r"\.0$", "", next_str)
 
-            # जर पुढचा सेल रिकामा नसेल आणि त्यात व्हॅल्यू असेल तर Concat करा
             if next_str and next_str.lower() != "nan":
-                # हॅडरची नावे कॉनकॅट होण्यापासून रोखण्यासाठी (उदा. QTY, FWIDTH इत्यादी सुटतील)
-                invalid_headers = ["FWIDTH", "FHEIGHT", "GLSW", "GLSH", "GLASS", "QTY", "DESCRIPTION"]
-                if next_str.upper() not in invalid_headers:
+                # हॅडर किंवा डायमेन्शन कॉलम इग्नोर करणे
+                invalid_headers = ["FWIDTH", "FHEIGHT", "GLSW", "GLSH", "GLASS", "QTY", "DESCRIPTION", "WIDTH", "HEIGHT"]
+                
+                # १. जर पुढचा सेल pure number/dimension असेल (उदा. 1714, 1560), तर Concat करायचा नाही
+                is_numeric_dim = next_str.isdigit() or re.match(r"^\d+(\.\d+)?$", next_str)
+                
+                # २. जर पुढचा सेल व्हॅलिड लोकेशन / टेक्स्ट असेल (उदा. 3RD A, B1, BEDROOM)
+                is_valid_location = not is_numeric_dim and next_str.upper() not in invalid_headers
+
+                # जर २रा कॉलम आहे आणि तो व्हॅलिड टेक्स्ट/लोकेशन आहे तरच जोडा
+                if is_valid_location:
                     code = f"{code} {next_str}"
 
     return re.sub(r"\s+", " ", code).strip()
