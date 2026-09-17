@@ -672,53 +672,56 @@ def collect_glass(buffer: pd.DataFrame, header: HeaderInfo) -> Optional[str]:
 
     return None
 
-def parse_header_block(dataframe: pd.DataFrame, block: HeaderBlock, source_file: str, sheet_name: str) -> List[GlassRecord]:
-    records: List[GlassRecord] = []
-    buffers = build_record_buffers(dataframe, block)
+def parse_header_block(
+    dataframe: pd.DataFrame,
+    block: HeaderBlock,
+    source_file: str,
+    sheet_name: str,
+) -> List[GlassRecord]:
+  records: List[GlassRecord] = []
+  buffers = build_record_buffers(dataframe, block)
 
-    for buffer in buffers:
-        first_row = buffer.iloc[0]
-        window = build_window_code(first_row, block.header)
+  for buffer in buffers:
+    first_row = buffer.iloc[0]
+    window = build_window_code(first_row, block.header)
 
-        width = collect_numeric_from_buffer(buffer, block.header.width_col)
-        height = collect_numeric_from_buffer(buffer, block.header.height_col)
-        qty = collect_numeric_from_buffer(buffer, block.header.qty_col)
-        glass_raw = collect_glass(buffer, block.header)
+    width = collect_numeric_from_buffer(buffer, block.header.width_col)
+    height = collect_numeric_from_buffer(buffer, block.header.height_col)
+    qty = collect_numeric_from_buffer(buffer, block.header.qty_col)
+    glass_raw = collect_glass(buffer, block.header)
 
-        if not window or width is None or height is None:
-            continue
-        if qty is None:
-            qty = 1
+    if not window or width is None or height is None:
+      continue
+    if qty is None:
+      qty = 1
 
-        # FROSTED GLASS ignore करणे
-        if glass_raw and "FROSTED" in str(glass_raw).upper():
-            continue
+    # =========================================================
+    # FROSTED CHECK FIX:
+    # फक्त 'FROSTED' किंवा 'FROSTED GLASS' असेल तरच ignore करा.
+    # 'FROSTED TOUGHENED' असल्यास read करा.
+    # =========================================================
+    if glass_raw:
+      glass_clean = re.sub(r"\s+", " ", str(glass_raw)).strip().upper()
 
-        glass = standardize_glass_spec(glass_raw)
+      # जर फक्त FROSTED किंवा FROSTED GLASS असेल तर इग्नोर करा
+      if glass_clean in ["FROSTED", "FROSTED GLASS"]:
+        continue
 
-        records.append(
-            GlassRecord(
-                WindowCode=window,
-                Width=width,
-                Height=height,
-                Qty=qty,
-                GlassType=glass,
-                SourceFile=source_file,
-                SheetName=sheet_name,
-            )
+    glass = standardize_glass_spec(glass_raw)
+
+    records.append(
+        GlassRecord(
+            WindowCode=window,
+            Width=width,
+            Height=height,
+            Qty=qty,
+            GlassType=glass,
+            SourceFile=source_file,
+            SheetName=sheet_name,
         )
+    )
 
-    return records
-
-def parse_business_sheet(dataframe: pd.DataFrame, source_file: str, sheet_name: str) -> List[GlassRecord]:
-    headers = find_header_blocks(dataframe)
-    blocks = build_header_blocks(dataframe, headers)
-    all_records: List[GlassRecord] = []
-
-    for block in blocks:
-        all_records.extend(parse_header_block(dataframe, block, source_file, sheet_name))
-
-    return all_records
+  return records
 
 def load_excel_with_calculated_values(file) -> Dict[str, pd.DataFrame]:
     file_bytes = io.BytesIO(file.read())
