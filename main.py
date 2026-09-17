@@ -776,10 +776,15 @@ def parse_header_block(
     if qty is None:
       qty = 1
 
-    # FROSTED FIX: फक्त 'FROSTED' किंवा 'FROSTED GLASS' इग्नोर करा ('FROSTED TOUGHENED' वाचले जाईल)
+    # =========================================================
+    # UPDATED FROSTED CHECK:
+    # जर नाव 'FROSTED TOUGHENED' नसेल आणि त्यात 'FROSTED' शब्द असेल,
+    # तर त्याला ignore/skip करा (उदा. '5MM FROSTED', 'FROSTED GLASS').
+    # =========================================================
     if glass_raw:
       glass_clean = re.sub(r"\s+", " ", str(glass_raw)).strip().upper()
-      if glass_clean in ["FROSTED", "FROSTED GLASS"]:
+
+      if "FROSTED" in glass_clean and "TOUGHENED" not in glass_clean:
         continue
 
     glass = standardize_glass_spec(glass_raw)
